@@ -24,3 +24,7 @@
 *, *::after, *::before {
   box-sizing: border-box;
 }
+
+body {
+  margin: 0em;
+}

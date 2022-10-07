@@ -35,9 +35,14 @@
 </main>
 
 <style>
+  .container {
+    padding: 0.5em 1em;
+  }
   .board {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
     width: 100%;
-    gap: 20px;
+    gap: 1em;
+    padding: 1em;
   }
 </style>

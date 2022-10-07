@@ -1,27 +1,50 @@
 <script lang="ts">
-  import { invoke } from "@tauri-apps/api/tauri";
   import type { Group } from "src/database";
   import TaskCard from "./TaskCard.svelte";
+  import { Plus } from "phosphor-svelte";
 
   export let group: Group;
   export let refresh: () => void;
 
-  let new_task_body: string;
-
   $: id = group.id;
+  let tasks = group.tasks.map((task) => ({ task, edit: false }));
 
   const addTask = () => {
-    invoke("add_task", { groupId: id, body: new_task_body });
-    refresh();
+    tasks = tasks.concat({ task: undefined, edit: true });
   };
 </script>
 
-<div>
+<div class="group-container">
   <h1>{group.name}</h1>
-  <span>{group.id}</span>
-  {#each group.tasks as task}
-    <TaskCard groupId={id} {task} {refresh} />
+  {#each tasks as { task, edit }}
+    <TaskCard groupId={id} {task} {edit} {refresh} />
   {/each}
-  <input bind:value={new_task_body} />
-  <button on:click={addTask}>Add Task</button>
+  <div>
+    <button on:click={addTask} class="add-task">
+      <Plus size={20} weight="fill" color="var(--icon-color)" />
+    </button>
+  </div>
+  <div class="drop" />
 </div>
+
+<style>
+  .drop {
+    height: 5em;
+    width: 100%;
+  }
+
+  .group-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .add-task {
+    display: flex;
+    align-items: center;
+    background-color: transparent;
+    border: none;
+    --icon-color: white;
+  }
+</style>
