@@ -2,7 +2,7 @@ use crate::database::board::{Board, BoardState};
 use crate::database::group::Group;
 use crate::database::reset::Reset;
 use crate::database::task::Task;
-use crate::helpers::{find_group, find_task, remove_task_from_group};
+use crate::helpers::{find_group, find_task, find_task_or_create, remove_task_from_group};
 
 #[tauri::command]
 pub fn greet(name: &str) -> String {
@@ -53,6 +53,19 @@ pub fn change_task_group(
         let new_group = find_group(new_group_id, board).expect("Group to exist");
         new_group.tasks.push(task_clone);
     }
+}
+
+#[tauri::command]
+pub fn change_task_body(
+    group_id: String,
+    task_id: String,
+    body: String,
+    state: tauri::State<BoardState>,
+) {
+    let board = &mut *(state.0.lock().unwrap());
+    let group = find_group(group_id, board).expect("Group to exist");
+    let task_pos = find_task_or_create(task_id, group);
+    group.tasks[task_pos].body = body;
 }
 
 #[tauri::command]
