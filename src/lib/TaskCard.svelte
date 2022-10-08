@@ -2,49 +2,69 @@
   import { invoke } from "@tauri-apps/api/tauri";
   import type { Task } from "../database";
   import { Trash, Pencil } from "phosphor-svelte";
+  import { onMount } from "svelte";
+  import { immovableItem } from "./drag/UseImmovableItem";
+  import { dropData } from "./drag/UseDropData";
+
   export let task: Task;
   export let edit: boolean = false;
   export let groupId: string;
   export let refresh: () => void;
 
-  let new_group_id: string;
+  let editBodyInput: HTMLInputElement;
+  if (edit) onMount(() => editBodyInput.focus());
 
   const removeTask = () => {
     invoke("remove_task", { groupId: groupId, taskId: task.id });
     refresh();
   };
-  // TODO: Fix DnD
-  // const moveTask = () => {
-  //   invoke("change_task_group", {
-  //     taskId: task.id,
-  //     oldGroupId: groupId,
-  //     newGroupId: new_group_id,
-  //   });
-  //   refresh();
-  // };
 
-  const onSubmit = (e: any) => {
-    const formData = new FormData(e.target);
-    const data = new Map(Array.from(formData.entries()));
-    const body = data.get("body");
-    invoke("change_task_body", { groupId, taskId: task?.id || "", body });
+  const change_or_add_task = (
+    groupId: string,
+    taskId: string,
+    body: string
+  ) => {
+    invoke("change_task_body", { groupId, taskId, body });
     refresh();
     edit = false;
   };
 
+  const onSubmit = (e: any) => {
+    const formData = new FormData(e.target);
+    const data = new Map(Array.from(formData.entries()));
+    const body = data.get("body") as string;
+    change_or_add_task(groupId, task?.id || "", body);
+  };
+
   const onEdit = () => (edit = true);
+
+  const onBlur = (e) => {
+    e.preventDefault();
+    change_or_add_task(groupId, "", e.target.value);
+  };
 </script>
 
-<div class="task-container">
-  {#if edit}
+{#if edit}
+  <div class="task-container" use:immovableItem>
     <form class="task-edit-container" on:submit|preventDefault={onSubmit}>
-      <input type="text" name="body" id="body" value={task?.body || ""} />
+      <input
+        bind:this={editBodyInput}
+        type="text"
+        name="body"
+        id="body"
+        value={task?.body || ""}
+        on:blur={onBlur}
+      />
       <button type="submit" class="action edit">
         <Pencil size={20} weight="fill" color="white" />
       </button>
     </form>
-  {:else}
-    <span class="task-body">{task.body}</span>
+  </div>
+{:else}
+  <div class="task-container" use:dropData={task?.id}>
+    <h3 class={`task-body ${task?.body || "untitled"}`}>
+      {task?.body || "Untitled"}
+    </h3>
     <div class="action-container">
       <button class="action" on:click={onEdit}>
         <Pencil size={20} weight="fill" color="var(--icon-color)" />
@@ -53,8 +73,8 @@
         <Trash size={20} weight="fill" color="var(--icon-color)" />
       </button>
     </div>
-  {/if}
-</div>
+  </div>
+{/if}
 
 <style>
   .task-container {
@@ -74,6 +94,14 @@
   .action-container {
     display: flex;
     gap: 0.5em;
+  }
+
+  .task-body {
+    margin: 0;
+  }
+
+  .task-body.untitled {
+    color: rgba(255, 255, 255, 0.7);
   }
 
   button.action {

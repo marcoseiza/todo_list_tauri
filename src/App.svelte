@@ -2,8 +2,9 @@
   import { invoke } from "@tauri-apps/api/tauri";
   import GroupBlock from "./lib/GroupBlock.svelte";
   import type { Board } from "./database";
+  import Dragula from "./lib/drag/Dragula.svelte";
+  import AddGroup from "./lib/AddGroup.svelte";
 
-  let new_group_name: string;
   let promiseBoard: Promise<Board>;
 
   const updateBoard = () => (promiseBoard = invoke("get_board"));
@@ -12,26 +13,41 @@
     invoke("reset");
     updateBoard();
   };
-  const addGroup = () => {
-    invoke("add_group", { name: new_group_name });
-    updateBoard();
-  };
 
   updateBoard();
+
+  const onDrop = (
+    task: HTMLElement,
+    newGroup: HTMLElement,
+    oldGroup: HTMLElement,
+    _siblingTask: HTMLElement
+  ) => {
+    invoke("change_task_group", {
+      taskId: task.dataset.drop,
+      oldGroupId: oldGroup.dataset.drop,
+      newGroupId: newGroup.dataset.drop,
+    });
+    updateBoard();
+  };
 </script>
 
 <main class="container">
   <h1>Tasks</h1>
   <div class="board">
-    {#await promiseBoard then board}
-      {#each board.groups as group}
-        <GroupBlock {group} refresh={updateBoard} />
-      {/each}
-    {/await}
+    <Dragula {onDrop}>
+      {#await promiseBoard then board}
+        {#each board.groups as group}
+          <div class="board-column">
+            <GroupBlock {group} refresh={updateBoard} />
+          </div>
+        {/each}
+      {/await}
+    </Dragula>
+    <div class="board-column new-group">
+      <AddGroup {updateBoard} />
+    </div>
   </div>
   <button on:click={reset}>Reset Store</button>
-  <input bind:value={new_group_name} />
-  <button on:click={addGroup}>Add Group</button>
 </main>
 
 <style>
@@ -39,10 +55,22 @@
     padding: 0.5em 1em;
   }
   .board {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    display: flex;
     width: 100%;
     gap: 1em;
     padding: 1em;
+    overflow: scroll;
+  }
+
+  .board-column {
+    height: 100%;
+    min-width: 300px;
+    max-width: 300px;
+  }
+
+  .board-column.new-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 </style>

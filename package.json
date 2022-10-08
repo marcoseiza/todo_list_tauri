@@ -12,12 +12,14 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@tauri-apps/api": "^1.1.0"
+    "@tauri-apps/api": "^1.1.0",
+    "dragula": "^3.7.3"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^1.0.1",
     "@tauri-apps/cli": "^1.1.0",
     "@tsconfig/svelte": "^3.0.0",
+    "@types/dragula": "^3.7.1",
     "@types/node": "^18.7.10",
     "phosphor-svelte": "^1.2.1",
     "svelte": "^3.49.0",
