@@ -1,8 +1,7 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/tauri";
   import { Plus } from "phosphor-svelte";
-
-  export let updateBoard: () => void;
+  import { board } from "../database/store";
 
   const onSubmit = (e) => {
     e.preventDefault();
@@ -11,7 +10,7 @@
     const name = data.get("group-name") as string;
     if (name != "") {
       invoke("add_group", { name });
-      updateBoard();
+      board.reload();
     }
     e.target.reset();
   };

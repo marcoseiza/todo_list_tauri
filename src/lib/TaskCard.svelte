@@ -5,18 +5,18 @@
   import { onMount } from "svelte";
   import { immovableItem } from "./drag/UseImmovableItem";
   import { dropData } from "./drag/UseDropData";
+  import { board } from "../database/store";
 
   export let task: Task;
   export let edit: boolean = false;
   export let groupId: string;
-  export let refresh: () => void;
 
   let editBodyInput: HTMLInputElement;
   if (edit) onMount(() => editBodyInput.focus());
 
   const removeTask = () => {
     invoke("remove_task", { groupId: groupId, taskId: task.id });
-    refresh();
+    board.reload();
   };
 
   const change_or_add_task = (
@@ -25,7 +25,7 @@
     body: string
   ) => {
     invoke("change_task_body", { groupId, taskId, body });
-    refresh();
+    board.reload();
     edit = false;
   };
 

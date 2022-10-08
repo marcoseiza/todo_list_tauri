@@ -5,14 +5,16 @@
   import { dragContainer } from "./drag/UseContainerAction";
   import { immovableItem } from "./drag/UseImmovableItem";
   import { dropData } from "./drag/UseDropData";
+  import { invoke } from "@tauri-apps/api/tauri";
+  import { board } from "../database/store";
 
   export let group: Group;
-  export let refresh: () => void;
 
   let tasks = group.tasks.map((task) => ({ task, edit: false }));
 
   const addTask = () => {
-    tasks = tasks.concat({ task: undefined, edit: true });
+    invoke("add_task", { groupId: group.id, body: "" });
+    board.reload();
   };
 </script>
 
@@ -20,7 +22,7 @@
   <h1 class="group-name">{group.name}</h1>
   <div use:dragContainer use:dropData={group.id} class="task-list">
     {#each tasks as { task, edit }}
-      <TaskCard groupId={group.id} {task} {edit} {refresh} />
+      <TaskCard groupId={group.id} {task} {edit} />
     {/each}
     <div class="add-task-container" use:immovableItem>
       <button on:click={addTask} class="add-task">

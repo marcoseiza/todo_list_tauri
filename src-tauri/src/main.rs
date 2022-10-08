@@ -4,7 +4,7 @@
 )]
 
 use crate::commands::{
-    add_group, add_task, change_task_body, change_task_group, get_board, greet, remove_task, reset,
+    add_group, add_task, change_task_body, change_task_group, get_board, remove_task, reset,
 };
 use crate::database::board::BoardState;
 
@@ -16,7 +16,6 @@ fn main() {
     tauri::Builder::default()
         .manage(BoardState(Default::default()))
         .invoke_handler(tauri::generate_handler![
-            greet,
             get_board,
             add_group,
             add_task,

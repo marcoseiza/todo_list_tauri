@@ -1,20 +1,14 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/tauri";
   import GroupBlock from "./lib/GroupBlock.svelte";
-  import type { Board } from "./database";
   import Dragula from "./lib/drag/Dragula.svelte";
   import AddGroup from "./lib/AddGroup.svelte";
+  import { board } from "./database/store";
 
-  let promiseBoard: Promise<Board>;
-
-  const updateBoard = () => (promiseBoard = invoke("get_board"));
-
-  const reset = () => {
-    invoke("reset");
-    updateBoard();
+  const reset = async () => {
+    await invoke("reset");
+    board.reload();
   };
-
-  updateBoard();
 
   const onDrop = (
     task: HTMLElement,
@@ -27,7 +21,7 @@
       oldGroupId: oldGroup.dataset.drop,
       newGroupId: newGroup.dataset.drop,
     });
-    updateBoard();
+    board.reload();
   };
 </script>
 
@@ -35,16 +29,16 @@
   <h1>Tasks</h1>
   <div class="board">
     <Dragula {onDrop}>
-      {#await promiseBoard then board}
-        {#each board.groups as group}
+      {#await $board then board}
+        {#each board.groups as group (group.id)}
           <div class="board-column">
-            <GroupBlock {group} refresh={updateBoard} />
+            <GroupBlock {group} />
           </div>
         {/each}
       {/await}
     </Dragula>
     <div class="board-column new-group">
-      <AddGroup {updateBoard} />
+      <AddGroup />
     </div>
   </div>
   <button on:click={reset}>Reset Store</button>

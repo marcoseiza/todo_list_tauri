@@ -8,6 +8,7 @@ pub struct Task {
 }
 
 impl Default for Task {
+    #[doc = "Returns a `Task` with a unique `id`, and empty `body`"]
     fn default() -> Self {
         Task {
             id: Uuid::new_v4().simple().to_string(),

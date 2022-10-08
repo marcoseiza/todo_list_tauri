@@ -5,11 +5,6 @@ use crate::database::task::Task;
 use crate::helpers::{find_group, find_task, find_task_or_create, remove_task_from_group};
 
 #[tauri::command]
-pub fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
-#[tauri::command]
 pub fn get_board(state: tauri::State<BoardState>) -> Board {
     let board = state.0.lock().unwrap();
     (*board).clone()
@@ -43,6 +38,7 @@ pub fn change_task_group(
     new_group_id: String,
     state: tauri::State<BoardState>,
 ) {
+    dbg!(task_id.clone(), old_group_id.clone(), new_group_id.clone());
     let board = &mut *(state.0.lock().unwrap());
     let task_clone: Task;
     {
