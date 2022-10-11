@@ -1,29 +1,23 @@
 use serde::Serialize;
-use uuid::Uuid;
+use titlecase::titlecase;
 
+use crate::database::color::Color;
+use crate::database::id::Id;
 use crate::database::task::Task;
+use crate::helpers::trim_whitespace;
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Default)]
 pub struct Group {
-    pub id: String,
+    pub id: Id,
     pub name: String,
+    pub color: Color,
     pub tasks: Vec<Task>,
-}
-
-impl Default for Group {
-    fn default() -> Self {
-        Group {
-            id: Uuid::new_v4().simple().to_string(),
-            name: Default::default(),
-            tasks: Default::default(),
-        }
-    }
 }
 
 impl Group {
     pub fn default_from(name: String) -> Self {
         Group {
-            name,
+            name: trim_whitespace(&*titlecase(name.trim())),
             ..Default::default()
         }
     }

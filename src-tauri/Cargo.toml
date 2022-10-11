@@ -20,6 +20,9 @@ tauri = { version = "1.1", features = ["api-all"] }
 chrono = "0.4.22"
 maplit = "1.0.2"
 uuid = "1.1.2"
+titlecase = "2.2.1"
+strum_macros = "0.24.3"
+strum = "0.24.1"
 
 [features]
 # by default Tauri runs in production mode

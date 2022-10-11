@@ -4,7 +4,8 @@
 )]
 
 use crate::commands::{
-    add_group, add_task, change_task_body, change_task_group, get_board, remove_task, reset,
+    add_group, add_task, change_task_body_or_create, change_task_group, get_board, remove_group,
+    remove_task, reset, update_group_color, update_group_name, update_group_pos,
 };
 use crate::database::board::BoardState;
 
@@ -22,7 +23,11 @@ fn main() {
             reset,
             remove_task,
             change_task_group,
-            change_task_body
+            change_task_body_or_create,
+            update_group_pos,
+            remove_group,
+            update_group_name,
+            update_group_color
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

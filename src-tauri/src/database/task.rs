@@ -1,26 +1,17 @@
 use serde::Serialize;
-use uuid::Uuid;
 
-#[derive(Serialize, Clone)]
+use crate::{database::id::Id, helpers::trim_whitespace};
+
+#[derive(Serialize, Default, Clone)]
 pub struct Task {
-    pub id: String,
+    pub id: Id,
     pub body: String,
-}
-
-impl Default for Task {
-    #[doc = "Returns a `Task` with a unique `id`, and empty `body`"]
-    fn default() -> Self {
-        Task {
-            id: Uuid::new_v4().simple().to_string(),
-            body: Default::default(),
-        }
-    }
 }
 
 impl Task {
     pub fn default_from(body: String) -> Self {
         Task {
-            body,
+            body: trim_whitespace(body.trim()),
             ..Default::default()
         }
     }
