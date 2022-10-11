@@ -59,8 +59,12 @@
         "height": 600,
         "resizable": true,
         "title": "TodoList",
-        "width": 800
+        "width": 800,
+        "transparent": true,
+        "decorations": false,
+        "fileDropEnabled": false
       }
-    ]
+    ],
+    "macOSPrivateApi": true
   }
 }

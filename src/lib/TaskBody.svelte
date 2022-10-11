@@ -8,9 +8,10 @@
 </script>
 
 <h3
-  class={`flex cursor-text break-all ${
+  class={`flex cursor-text min-w-0 ${
     body || edit ? "text-white" : "text-stone-300"
   }`}
+  style="word-break: break-word;"
   on:dblclick={onEdit}
 >
   {#if !edit}

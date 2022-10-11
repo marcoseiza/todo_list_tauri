@@ -8,6 +8,7 @@ module.exports = {
       fontFamily: {
         'sans': [...defaultTheme.fontFamily.mono]
       },
+      
     },
   },
   plugins: [],

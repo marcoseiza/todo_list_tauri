@@ -57,7 +57,7 @@
   <div
     use:dragContainer={TASK_DND}
     use:dropData={group.id}
-    class="flex flex-col gap-2 pb-10"
+    class="flex flex-col gap-2 pb-10 min-w-0"
   >
     {#each tasksCardInfos as info}
       <TaskCard groupId={group.id} {info} />

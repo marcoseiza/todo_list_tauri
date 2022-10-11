@@ -16,13 +16,14 @@ tauri-build = { version = "1.1", features = [] }
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "1.1", features = ["api-all"] }
+tauri = { version = "1.1", features = ["api-all", "macos-private-api"] }
 chrono = "0.4.22"
 maplit = "1.0.2"
 uuid = "1.1.2"
 titlecase = "2.2.1"
 strum_macros = "0.24.3"
 strum = "0.24.1"
+window-vibrancy = "0.3.0"
 
 [features]
 # by default Tauri runs in production mode
