@@ -1,70 +1,41 @@
 <script lang="ts">
-  import { invoke } from "@tauri-apps/api/tauri";
-  import GroupBlock from "./lib/GroupBlock.svelte";
-  import Dragula from "./lib/drag/Dragula.svelte";
+  import { makeDrake } from "./lib/drag/Dragula";
+  import BoardBlock from "./lib/BoardBlock.svelte";
   import AddGroup from "./lib/AddGroup.svelte";
-  import { board } from "./database/store";
+  import { GROUP_DND, TASK_DND } from "./database/store";
+  import { change_task_group, update_group_pos } from "./backend";
 
-  const reset = async () => {
-    await invoke("reset");
-    board.reload();
-  };
-
-  const onDrop = (
+  const onTaskDrop = (
     task: HTMLElement,
     newGroup: HTMLElement,
     oldGroup: HTMLElement,
-    _siblingTask: HTMLElement
+    siblingTask: HTMLElement
   ) => {
-    invoke("change_task_group", {
-      taskId: task.dataset.drop,
-      oldGroupId: oldGroup.dataset.drop,
-      newGroupId: newGroup.dataset.drop,
-    });
-    board.reload();
+    change_task_group(
+      task.dataset.drop,
+      siblingTask?.dataset?.drop,
+      oldGroup.dataset.drop,
+      newGroup.dataset.drop
+    );
   };
+
+  const onGroupDrop = (
+    group: HTMLElement,
+    _c: HTMLElement,
+    _s: HTMLElement,
+    neighborGroup: HTMLElement
+  ) => {
+    update_group_pos(group.dataset.drop, neighborGroup?.dataset?.drop);
+  };
+
+  makeDrake(TASK_DND).on("drop", onTaskDrop);
+  makeDrake(GROUP_DND, {
+    checkHandle: true,
+    direction: "horizontal",
+  }).on("drop", onGroupDrop);
 </script>
 
-<main class="container">
-  <h1>Tasks</h1>
-  <div class="board">
-    <Dragula {onDrop}>
-      {#await $board then board}
-        {#each board.groups as group (group.id)}
-          <div class="board-column">
-            <GroupBlock {group} />
-          </div>
-        {/each}
-      {/await}
-    </Dragula>
-    <div class="board-column new-group">
-      <AddGroup />
-    </div>
-  </div>
-  <button on:click={reset}>Reset Store</button>
+<main class="flex overflow-scroll h-full p-4">
+  <BoardBlock />
+  <AddGroup />
 </main>
-
-<style>
-  .container {
-    padding: 0.5em 1em;
-  }
-  .board {
-    display: flex;
-    width: 100%;
-    gap: 1em;
-    padding: 1em;
-    overflow: scroll;
-  }
-
-  .board-column {
-    height: 100%;
-    min-width: 300px;
-    max-width: 300px;
-  }
-
-  .board-column.new-group {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-</style>

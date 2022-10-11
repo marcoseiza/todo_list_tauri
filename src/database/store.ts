@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api";
+import { get_board } from "../backend";
 import { writable } from "svelte/store";
 import type { Board } from ".";
 
@@ -7,7 +7,7 @@ export const board = (() => {
 
   const { subscribe, set } = writable(initialBoard, () => reload());
   const reload = () => {
-    set(invoke<Board>("get_board"));
+    set(get_board());
   };
 
   return {
@@ -15,3 +15,6 @@ export const board = (() => {
     reload,
   };
 })();
+
+export const TASK_DND = "task-dnd";
+export const GROUP_DND = "group-dnd";

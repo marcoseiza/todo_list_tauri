@@ -1,7 +1,7 @@
 import { getContext } from "svelte";
-import { DragContextKey, type DragContext } from "./DragContext";
+import type { DragContext } from "./DragContext";
 
-export const dragContainer = (node: HTMLElement) => {
-  const { addContainer } = getContext<DragContext>(DragContextKey);
+export const dragContainer = (node: HTMLElement, key: string) => {
+  const { addContainer } = getContext<DragContext>(key);
   addContainer(node);
 };

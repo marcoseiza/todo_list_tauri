@@ -1,71 +1,67 @@
 <script lang="ts">
-  import type { Group } from "src/database";
+  import {
+    newEditingTaskCardInfo,
+    taskToTaskCardInfo,
+    type Group,
+  } from "../database";
   import TaskCard from "./TaskCard.svelte";
-  import { Plus } from "phosphor-svelte";
   import { dragContainer } from "./drag/UseContainerAction";
-  import { immovableItem } from "./drag/UseImmovableItem";
   import { dropData } from "./drag/UseDropData";
-  import { invoke } from "@tauri-apps/api/tauri";
-  import { board } from "../database/store";
+  import { TASK_DND } from "../database/store";
+  import AddTask from "./AddTask.svelte";
+  import GroupTitle from "./GroupTitle.svelte";
+  import EditActions from "./EditActions.svelte";
+  import {
+    remove_group,
+    update_group_color,
+    update_group_name,
+  } from "../backend";
 
   export let group: Group;
+  let edit = false;
 
-  let tasks = group.tasks.map((task) => ({ task, edit: false }));
+  let tasksCardInfos = group.tasks.map(taskToTaskCardInfo);
 
   const addTask = () => {
-    invoke("add_task", { groupId: group.id, body: "" });
-    board.reload();
+    tasksCardInfos = tasksCardInfos.concat(newEditingTaskCardInfo());
+  };
+
+  const onRemove = () => remove_group(group.id);
+  const onEdit = () => (edit = true);
+
+  function onSubmit(this: HTMLTextAreaElement) {
+    update_group_name(group.id, this.value);
+    edit = false;
+  }
+
+  const onColor = (color: string) => {
+    update_group_color(group.id, color);
+    edit = false;
   };
 </script>
 
-<div class="group-container">
-  <h1 class="group-name">{group.name}</h1>
-  <div use:dragContainer use:dropData={group.id} class="task-list">
-    {#each tasks as { task, edit }}
-      <TaskCard groupId={group.id} {task} {edit} />
+<div
+  class="relative w-full grid grid-rows-[auto_1fr] bg-neutral-800 p-5 gap-4 rounded-lg"
+>
+  <div class="group">
+    <GroupTitle
+      name={group.name}
+      color={group.color}
+      {edit}
+      {onEdit}
+      {onSubmit}
+      {onColor}
+    />
+    <EditActions show={!edit} {onEdit} {onRemove} classext="top-3 right-3" />
+  </div>
+  <div
+    use:dragContainer={TASK_DND}
+    use:dropData={group.id}
+    class="flex flex-col gap-2 pb-10"
+  >
+    {#each tasksCardInfos as info}
+      <TaskCard groupId={group.id} {info} />
     {/each}
-    <div class="add-task-container" use:immovableItem>
-      <button on:click={addTask} class="add-task">
-        <Plus size={20} weight="fill" color="var(--icon-color)" />
-      </button>
-    </div>
+    <AddTask {addTask} />
   </div>
 </div>
-
-<style>
-  .group-container {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5em;
-    background-color: rgba(0, 0, 0, 0.1);
-    padding: 1.5em;
-  }
-
-  .group-name {
-    margin: 0.3em 0;
-  }
-
-  .add-task-container {
-    position: absolute;
-    padding: 1em 0;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .add-task {
-    display: flex;
-    align-items: center;
-    background-color: transparent;
-    border: none;
-    --icon-color: white;
-  }
-
-  .task-list {
-    padding-bottom: 2em;
-  }
-</style>
