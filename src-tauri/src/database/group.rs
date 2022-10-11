@@ -21,4 +21,12 @@ impl Group {
             ..Default::default()
         }
     }
+
+    pub fn default_from_color(name: String, color: Color) -> Self {
+        Group {
+            name: trim_whitespace(&*titlecase(name.trim())),
+            color,
+            ..Default::default()
+        }
+    }
 }

@@ -35,7 +35,10 @@
   }).on("drop", onGroupDrop);
 </script>
 
-<main class="flex overflow-scroll h-full p-4">
+<main
+  data-tauri-drag-region
+  class="flex overflow-scroll h-full p-4 pt-[var(--toolbar-size)]"
+>
   <BoardBlock />
   <AddGroup />
 </main>

@@ -3,6 +3,15 @@
     windows_subsystem = "windows"
 )]
 
+pub mod commands;
+pub mod database;
+pub mod helpers;
+#[cfg(target_os = "macos")]
+pub mod macos;
+
+#[cfg(target_os = "macos")]
+use macos::apply_title_bar_options;
+
 use tauri::Manager;
 use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial};
 
@@ -11,10 +20,6 @@ use crate::commands::{
     remove_task, reset, update_group_color, update_group_name, update_group_pos,
 };
 use crate::database::board::BoardState;
-
-pub mod commands;
-pub mod database;
-pub mod helpers;
 
 fn main() {
     tauri::Builder::default()
@@ -37,8 +42,13 @@ fn main() {
             #[cfg(target_os = "macos")]
             apply_vibrancy(&window, NSVisualEffectMaterial::HudWindow, None, None)
                 .expect("Unsupported platform! 'apply_vibrancy' is only supported on macOS");
+            #[cfg(target_os = "macos")]
+            apply_title_bar_options(&window, true, false).expect(
+                "Unsupported platform! 'apply_transparent_title_bar' is only supported on macOS",
+            );
             Ok(())
         })
+        .plugin(tauri_plugin_window_state::Builder::default().build())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -6,7 +6,7 @@
   import GroupBlock from "./GroupBlock.svelte";
 </script>
 
-<div class="relative flex gap-4 h-full" use:dragContainer={GROUP_DND}>
+<div class="relative flex gap-4 h-fit" use:dragContainer={GROUP_DND}>
   {#await $board then board}
     {#each board.groups as group (group.id)}
       <div

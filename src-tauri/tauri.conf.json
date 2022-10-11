@@ -32,9 +32,9 @@
       "identifier": "com.marcoseiza-todo-list.dev",
       "longDescription": "",
       "macOS": {
+        "frameworks": [],
         "entitlements": null,
         "exceptionDomain": "",
-        "frameworks": [],
         "providerShortName": null,
         "signingIdentity": null
       },
@@ -58,11 +58,12 @@
         "fullscreen": false,
         "height": 600,
         "resizable": true,
-        "title": "TodoList",
+        "title": "Todo List",
         "width": 800,
         "transparent": true,
-        "decorations": false,
-        "fileDropEnabled": false
+        "decorations": true,
+        "fileDropEnabled": false,
+        "visible": false
       }
     ],
     "macOSPrivateApi": true

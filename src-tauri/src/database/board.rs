@@ -1,6 +1,7 @@
 use serde::Serialize;
 use std::sync::Mutex;
 
+use crate::database::color::Color;
 use crate::database::group::Group;
 use crate::database::reset::Reset;
 
@@ -13,9 +14,9 @@ impl Default for Board {
     fn default() -> Self {
         Board {
             groups: vec![
-                Group::default_from("To Do".to_string()),
-                Group::default_from("Doing".to_string()),
-                Group::default_from("Done".to_string()),
+                Group::default_from_color("To Do".to_string(), Color::RED),
+                Group::default_from_color("Doing".to_string(), Color::YELLOW),
+                Group::default_from_color("Done".to_string(), Color::GREEN),
             ],
         }
     }
