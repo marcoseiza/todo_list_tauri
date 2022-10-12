@@ -3,13 +3,6 @@
 @tailwind utilities;
 
 :root {
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 400;
-
-  color: #0f0f0f;
-  background-color: #f6f6f6;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -17,10 +10,13 @@
   -webkit-text-size-adjust: 100%;
 }
 
+
+:root {
+  color: rgb(26, 26, 26);
+}
 @media (prefers-color-scheme: dark) {
   :root {
-    color: #f6f6f6;
-    background-color: #2f2f2f71;
+    color: rgb(243, 243, 243);
   }
 }
 
@@ -40,4 +36,18 @@ body {
   height: 100%;
   width: 100%;
   overflow: hidden;
+  background-color: rgba(163, 163, 163, 0.368);
+  transition: background-color 100ms ease-in-out;
+}
+#app.window-blur {
+  background-color: rgba(163, 163, 163, 1.0);
+  transition-duration: 200ms;
+}
+@media (prefers-color-scheme: dark) {
+  #app {
+    background-color: rgba(58, 58, 58, 0.4);
+  }
+  #app.window-blur {
+    background-color: rgba(58, 58, 58, 1.0);
+  }
 }

@@ -2,19 +2,28 @@ export interface Board {
   groups: Group[];
 }
 
-export type GroupColor =
-  | "bg-blue-700"
-  | "bg-red-700"
-  | "bg-green-700"
-  | "bg-orange-700"
-  | "bg-yellow-600";
-export const GROUP_COLOR_VALUES = [
-  "bg-blue-700",
-  "bg-red-700",
-  "bg-green-700",
-  "bg-orange-700",
-  "bg-yellow-600",
-];
+export enum GroupColor {
+  BLUE = "BLUE",
+  GREEN = "GREEN",
+  RED = "RED",
+  ORANGE = "ORANGE",
+  YELLOW = "YELLOW",
+}
+
+export const GroupColorToValue = (color: GroupColor): string => {
+  switch (color) {
+    case GroupColor.BLUE:
+      return "bg-blue-500 dark:bg-blue-700";
+    case GroupColor.GREEN:
+      return "bg-green-500 dark:bg-green-700";
+    case GroupColor.RED:
+      return "bg-red-500 dark:bg-red-700";
+    case GroupColor.ORANGE:
+      return "bg-orange-500 dark:bg-orange-700";
+    case GroupColor.YELLOW:
+      return "bg-yellow-500 dark:bg-yellow-600";
+  }
+};
 
 export interface Group {
   id: string;

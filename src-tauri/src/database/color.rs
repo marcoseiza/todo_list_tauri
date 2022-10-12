@@ -4,15 +4,10 @@ use strum_macros::{Display, EnumString};
 #[derive(Debug, Display, Default, Clone, Copy, EnumString)]
 pub enum Color {
     #[default]
-    #[strum(serialize = "bg-blue-700")]
     BLUE,
-    #[strum(serialize = "bg-red-700")]
-    RED,
-    #[strum(serialize = "bg-green-700")]
     GREEN,
-    #[strum(serialize = "bg-orange-700")]
+    RED,
     ORANGE,
-    #[strum(serialize = "bg-yellow-600")]
     YELLOW,
 }
 

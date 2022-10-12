@@ -21,8 +21,8 @@
 </script>
 
 <div
-  class="group relative bg-neutral-500 p-4 rounded-md {!info.edit &&
-    'cursor-grab active:cursor-grabbing'}"
+  class="group relative bg-neutral-300 dark:bg-neutral-500 p-4 rounded-md {!info.edit &&
+    'cursor-grab active:cursor-grabbing'} shadow-md"
   use:dropData={info.id || ""}
   use:movableItem={{ key: TASK_DND, movable: !info.edit }}
 >

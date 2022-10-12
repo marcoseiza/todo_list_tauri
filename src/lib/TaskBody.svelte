@@ -8,8 +8,8 @@
 </script>
 
 <h3
-  class={`flex cursor-text min-w-0 ${
-    body || edit ? "text-white" : "text-stone-300"
+  class={`flex cursor-text min-w-0 font-bold ${
+    body || edit ? "" : "text-stone-600 dark:text-stone-300"
   }`}
   style="word-break: break-word;"
   on:dblclick={onEdit}

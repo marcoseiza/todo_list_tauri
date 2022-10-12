@@ -29,19 +29,19 @@
   const onRemove = () => remove_group(group.id);
   const onEdit = () => (edit = true);
 
-  function onSubmit(this: HTMLTextAreaElement) {
-    update_group_name(group.id, this.value);
+  async function onSubmit(this: HTMLTextAreaElement) {
+    await update_group_name(group.id, this.value);
     edit = false;
   }
 
-  const onColor = (color: string) => {
-    update_group_color(group.id, color);
+  const onColor = async (color: string) => {
+    await update_group_color(group.id, color);
     edit = false;
   };
 </script>
 
 <div
-  class="relative w-full grid grid-rows-[auto_1fr] bg-neutral-800 p-5 gap-4 rounded-lg"
+  class="relative w-full grid grid-rows-[auto_1fr] bg-neutral-200 dark:bg-neutral-800 p-5 gap-4 rounded-lg shadow-lg shadow-[rgba(0,0,0,0.4)]"
 >
   <div class="group">
     <GroupTitle

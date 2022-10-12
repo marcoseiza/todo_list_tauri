@@ -34,7 +34,7 @@ export const update_group_name = async (groupId: string, name: string) => {
 
 export const update_group_color = async (groupId: string, color: string) => {
   await invoke("update_group_color", { groupId, color });
-  board.reload();
+  // board.reload();
 };
 
 export const add_task = async (groupId: string, body: string) => {

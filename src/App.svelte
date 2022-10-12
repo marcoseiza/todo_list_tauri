@@ -1,7 +1,6 @@
 <script lang="ts">
   import { makeDrake } from "./lib/drag/Dragula";
   import BoardBlock from "./lib/BoardBlock.svelte";
-  import AddGroup from "./lib/AddGroup.svelte";
   import { GROUP_DND, TASK_DND } from "./database/store";
   import { change_task_group, update_group_pos } from "./backend";
 
@@ -35,10 +34,10 @@
   }).on("drop", onGroupDrop);
 </script>
 
-<main
-  data-tauri-drag-region
-  class="flex overflow-scroll h-full p-4 pt-[var(--toolbar-size)]"
->
+<main class="relative flex flex-col h-full w-full">
+  <div
+    data-tauri-drag-region
+    class="fixed top-0 left-0 w-full h-[var(--toolbar-size)] z-50"
+  />
   <BoardBlock />
-  <AddGroup />
 </main>

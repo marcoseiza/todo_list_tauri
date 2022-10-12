@@ -1,9 +1,13 @@
 <script lang="ts">
-  export let color: string = "";
-  export let onClick: (color: string) => void;
+  import { type GroupColor, GroupColorToValue } from "../database";
+
+  export let color: GroupColor;
+  export let onClick: () => void;
 </script>
 
 <button
-  class="block {color} w-[32px] h-[calc(32px+0.5em)] rounded-lg"
-  on:mousedown={() => onClick(color)}
+  class="block {GroupColorToValue(
+    color
+  )} w-[32px] h-[calc(32px+0.5em)] rounded-lg"
+  on:mousedown={onClick}
 />

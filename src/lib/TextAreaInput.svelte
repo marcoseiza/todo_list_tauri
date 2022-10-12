@@ -22,7 +22,7 @@
 
 <textarea
   bind:this={textAreaElement}
-  class="w-full text-inherit bg-transparent outline-none resize-none text-[inherit]"
+  class="w-full text-inherit font-inherit bg-transparent outline-none resize-none text-[inherit]"
   type="text"
   value={defaultVal}
   use:onEnter={handleOnEnter}
