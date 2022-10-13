@@ -1,7 +1,5 @@
-# Tauri + Svelte + Typescript
+# A ToDo List in Rust, Svelte using Tauri Front End
 
-This template should help get you started developing with Tauri, Svelte and TypeScript in Vite.
+Works in MacOS, have not checked out Windows or Linux.
 
-## Recommended IDE Setup
-
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer).
+Read more about it here in my blog, [Starting Out With Rust and Svelte Using Tauri](http://meizayaga.com/posts/9b762fca-c59f-4c6e-8684-f2885a8df1e6)
