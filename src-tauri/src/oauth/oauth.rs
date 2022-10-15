@@ -1,11 +1,12 @@
 use std::env;
 
+use firebase_rs;
 use oauth2::basic::BasicErrorResponseType;
 use oauth2::reqwest::async_http_client;
 use oauth2::{CsrfToken, Scope, TokenResponse};
 use oauth2::{RequestTokenError, StandardErrorResponse};
 use reqwest;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 use crate::oauth::github_client::parse_github_client_state;
@@ -86,7 +87,7 @@ pub async fn login_with_github(
     window.close()?;
 
     let reqclient = reqwest::Client::new();
-    let _response = reqclient
+    let response = reqclient
         .post(format!(
             "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={}",
             env::var("FIREBASE_WEB_API_KEY")?
@@ -101,6 +102,21 @@ pub async fn login_with_github(
         .await?
         .json::<Value>()
         .await?;
+    let auth = response.get("idToken").unwrap().as_str().unwrap();
+    let uuid = response.get("localId").unwrap().as_str().unwrap();
 
+    #[derive(Serialize, Deserialize, Debug)]
+    struct User {
+        name: String,
+    }
+
+    let new_user = User {
+        name: "marcos".into(),
+    };
+
+    let db_uri = "https://todo-list-474ef-default-rtdb.firebaseio.com/";
+    let db = firebase_rs::Firebase::auth(db_uri, auth).unwrap();
+
+    db.at("users").at(uuid).put(&new_user).await.unwrap();
     Ok(())
 }

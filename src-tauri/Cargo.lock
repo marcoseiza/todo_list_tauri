@@ -698,6 +698,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "firebase-rs"
+version = "2.0.5"
+dependencies = [
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+ "url",
+]
+
+[[package]]
 name = "flate2"
 version = "1.0.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3407,6 +3418,7 @@ dependencies = [
  "chrono",
  "cocoa",
  "dotenv",
+ "firebase-rs",
  "futures",
  "hyper",
  "maplit",
@@ -3444,7 +3456,19 @@ dependencies = [
  "num_cpus",
  "pin-project-lite",
  "socket2",
+ "tokio-macros",
  "winapi",
+]
+
+[[package]]
+name = "tokio-macros"
+version = "1.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9724f9a975fb987ef7a3cd9be0350edcbe130698af5b8f7a631e23d42d052484"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
