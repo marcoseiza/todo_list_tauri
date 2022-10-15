@@ -27,6 +27,17 @@ window-vibrancy = "0.3.0"
 tauri-plugin-window-state = "0.1.0"
 cocoa = "0.24.0"
 objc = "0.2.7"
+dotenv = "0.15.0"
+oauth2 = "4.2.3"
+url = "2.3.1"
+futures = "0.3.24"
+hyper = { version = "0.14.20", features = ["server"] }
+tower-service = "0.3.2"
+serde_urlencoded = "0.7.1"
+anyhow = "1.0.65"
+thiserror = "1.0.37"
+reqwest = { version = "0.11.12", features = ["json"] }
+tokio = "1.21.2"
 
 [features]
 # by default Tauri runs in production mode

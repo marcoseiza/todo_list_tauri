@@ -2,6 +2,10 @@ import { invoke } from "@tauri-apps/api";
 import type { Board } from "../database";
 import { board } from "../database/store";
 
+export const login_with_github = async () => {
+  return invoke("login_with_github");
+};
+
 export const get_board = async () => {
   return invoke<Board>("get_board");
 };
