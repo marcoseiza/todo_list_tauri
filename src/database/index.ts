@@ -1,3 +1,10 @@
+export interface User {
+  firebase_auth_token: string;
+  firebase_uid: string;
+  full_name: string;
+  board: Board;
+}
+
 export interface Board {
   groups: Group[];
 }

@@ -4,3 +4,4 @@ pub mod group;
 pub mod id;
 pub mod reset;
 pub mod task;
+pub mod user;

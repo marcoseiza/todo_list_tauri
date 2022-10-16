@@ -1,5 +1,3 @@
-use std::env;
-
 use firebase_rs;
 use oauth2::basic::BasicErrorResponseType;
 use oauth2::reqwest::async_http_client;
@@ -7,10 +5,11 @@ use oauth2::{CsrfToken, Scope, TokenResponse};
 use oauth2::{RequestTokenError, StandardErrorResponse};
 use reqwest;
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
 
+use crate::database::user::{parse_user_state, User, UserState};
 use crate::oauth::github_client::parse_github_client_state;
 use crate::oauth::oauth_helper::{listen_for_code, ListenForCodeError, ReceivedCode};
+use crate::oauth::sign_in_with_oauth;
 
 use super::github_client::GithubClient;
 
@@ -31,9 +30,11 @@ pub enum GetGithubTokenError {
     #[error(transparent)]
     TauriError(#[from] tauri::Error),
     #[error(transparent)]
-    VarError(#[from] env::VarError),
-    #[error(transparent)]
     ReqwestError(#[from] reqwest::Error),
+    #[error(transparent)]
+    FirebaseUrlParseError(#[from] firebase_rs::errors::UrlParseError),
+    #[error(transparent)]
+    FirebaseRequestError(#[from] firebase_rs::errors::RequestError),
 }
 
 impl Serialize for GetGithubTokenError {
@@ -49,7 +50,8 @@ impl Serialize for GetGithubTokenError {
 pub async fn login_with_github(
     app: tauri::AppHandle,
     ghclient_state: tauri::State<'_, GithubClient>,
-) -> anyhow::Result<(), GetGithubTokenError> {
+    user_state: tauri::State<'_, UserState>,
+) -> anyhow::Result<User, GetGithubTokenError> {
     let ghclient = parse_github_client_state(&ghclient_state).await;
 
     // Generate the authorization URL to which we'll redirect the user.
@@ -60,6 +62,8 @@ pub async fn login_with_github(
         .add_scope(Scope::new("user:email".to_string()))
         .url();
 
+    let code_future = listen_for_code(8080);
+
     let window = tauri::WindowBuilder::new(
         &app,
         format!("github_auth_{}", csrf_state.secret()),
@@ -68,7 +72,7 @@ pub async fn login_with_github(
     .build()
     .unwrap();
 
-    let ReceivedCode { code, state } = listen_for_code(8080).await?;
+    let ReceivedCode { code, state } = code_future.await?;
 
     if state.secret() != csrf_state.secret() {
         return Err(GetGithubTokenError::CsrfTokenMismatch {
@@ -82,41 +86,22 @@ pub async fn login_with_github(
         .request_async(async_http_client)
         .await?;
 
-    let access_token = token_res.access_token().secret();
+    let access_token = token_res.access_token().secret().to_string();
 
     window.close()?;
 
     let reqclient = reqwest::Client::new();
     let response = reqclient
-        .post(format!(
-            "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={}",
-            env::var("FIREBASE_WEB_API_KEY")?
+        .post(sign_in_with_oauth::get_post_url())
+        .json(&sign_in_with_oauth::RequestBody::make_body_for_github(
+            access_token,
         ))
-        .json(&json!({
-            "postBody": format!("access_token={}&providerId=github.com", access_token),
-            "requestUri": "http://localhost",
-            "returnIdpCredential":true,
-            "returnSecureToken":true
-        }))
         .send()
         .await?
-        .json::<Value>()
+        .json::<sign_in_with_oauth::ResponseBody>()
         .await?;
-    let auth = response.get("idToken").unwrap().as_str().unwrap();
-    let uuid = response.get("localId").unwrap().as_str().unwrap();
 
-    #[derive(Serialize, Deserialize, Debug)]
-    struct User {
-        name: String,
-    }
-
-    let new_user = User {
-        name: "marcos".into(),
-    };
-
-    let db_uri = "https://todo-list-474ef-default-rtdb.firebaseio.com/";
-    let db = firebase_rs::Firebase::auth(db_uri, auth).unwrap();
-
-    db.at("users").at(uuid).put(&new_user).await.unwrap();
-    Ok(())
+    let mut user = parse_user_state(&user_state).await;
+    *user = User::from_oauth_response(response);
+    Ok((*user).clone())
 }

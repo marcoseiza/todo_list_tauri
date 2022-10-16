@@ -13,6 +13,7 @@ pub mod oauth;
 #[cfg(target_os = "macos")]
 pub mod macos;
 
+use database::user::UserState;
 #[cfg(target_os = "macos")]
 use macos::apply_title_bar_options;
 
@@ -26,14 +27,13 @@ use crate::commands::{
     add_group, add_task, change_task_body_or_create, change_task_group, get_board, remove_group,
     remove_task, reset, update_group_color, update_group_name, update_group_pos,
 };
-use crate::database::board::BoardState;
 use crate::oauth::oauth::login_with_github;
 
 fn main() {
     dotenv().ok();
 
     tauri::Builder::default()
-        .manage(BoardState(Default::default()))
+        .manage(UserState(Default::default()))
         .manage(GithubClient(Mutex::new(make_github_client().unwrap())))
         .invoke_handler(tauri::generate_handler![
             get_board,

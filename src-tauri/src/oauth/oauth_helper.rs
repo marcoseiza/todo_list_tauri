@@ -85,9 +85,7 @@ pub async fn listen_for_code(port: u32) -> anyhow::Result<ReceivedCode, ListenFo
         async move { Ok::<_, hyper::Error>(service) }
     });
 
-    let server_future = server::Server::bind(&addr).serve(make_svc);
-
-    let mut server_future = server_future.fuse();
+    let mut server_future = server::Server::bind(&addr).serve(make_svc).fuse();
     let mut rx = rx.fuse();
 
     futures::select! {

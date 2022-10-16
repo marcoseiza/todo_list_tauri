@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter};
 
 pub type UrlParseResult<T> = Result<T, UrlParseError>;
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum UrlParseError {
     NoPath,
     NotHttps,
@@ -21,7 +21,7 @@ impl Display for UrlParseError {
 
 pub type RequestResult<T> = Result<T, RequestError>;
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum RequestError {
     NotJSON,
     NoUTF8,
