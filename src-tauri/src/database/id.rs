@@ -1,7 +1,7 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Serialize, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Debug)]
 pub struct Id(String);
 
 impl Default for Id {

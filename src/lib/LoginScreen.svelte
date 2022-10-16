@@ -1,10 +1,10 @@
-<script>
+<script lang="ts">
   import AppIcon from "./AppIcon.svelte";
   import GithubLogin from "./GithubLogin.svelte";
 </script>
 
 <div
-  class="fixed w-full h-full flex flex-col justify-center items-center gap-10 backdrop-blur bg-neutral-800/10 z-50"
+  class="fixed w-full h-full flex flex-col justify-center items-center gap-10 backdrop-blur bg-neutral-800/10 z-40"
 >
   <div class="flex flex-col justify-center items-center">
     <AppIcon size={150} />

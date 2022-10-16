@@ -24,8 +24,9 @@ use tauri::Manager;
 use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial};
 
 use crate::commands::{
-    add_group, add_task, change_task_body_or_create, change_task_group, get_board, remove_group,
-    remove_task, reset, update_group_color, update_group_name, update_group_pos,
+    add_group, add_task, change_task_body_or_create, change_task_group, get_board, get_save_state,
+    remove_group, remove_task, reset, save_state, update_group_color, update_group_name,
+    update_group_pos,
 };
 use crate::oauth::oauth::login_with_github;
 
@@ -47,7 +48,9 @@ fn main() {
             remove_group,
             update_group_name,
             update_group_color,
-            login_with_github
+            login_with_github,
+            save_state,
+            get_save_state
         ])
         .setup(|app| {
             let window = app.get_window("main").unwrap();

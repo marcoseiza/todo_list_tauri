@@ -4,8 +4,10 @@ use oauth2::reqwest::async_http_client;
 use oauth2::{CsrfToken, Scope, TokenResponse};
 use oauth2::{RequestTokenError, StandardErrorResponse};
 use reqwest;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
+use tokio::sync::MutexGuard;
 
+use crate::database::board::Board;
 use crate::database::user::{parse_user_state, User, UserState};
 use crate::oauth::github_client::parse_github_client_state;
 use crate::oauth::oauth_helper::{listen_for_code, ListenForCodeError, ReceivedCode};
@@ -90,18 +92,36 @@ pub async fn login_with_github(
 
     window.close()?;
 
-    let reqclient = reqwest::Client::new();
-    let response = reqclient
-        .post(sign_in_with_oauth::get_post_url())
-        .json(&sign_in_with_oauth::RequestBody::make_body_for_github(
-            access_token,
-        ))
-        .send()
-        .await?
-        .json::<sign_in_with_oauth::ResponseBody>()
-        .await?;
+    let mut user: MutexGuard<User> = {
+        // Log in user
+        let reqclient = reqwest::Client::new();
+        let response = reqclient
+            .post(sign_in_with_oauth::get_post_url())
+            .json(&sign_in_with_oauth::RequestBody::make_body_for_github(
+                access_token,
+            ))
+            .send()
+            .await?
+            .json::<sign_in_with_oauth::ResponseBody>()
+            .await?;
 
-    let mut user = parse_user_state(&user_state).await;
-    *user = User::from_oauth_response(response);
+        let mut user = parse_user_state(&user_state).await;
+        *user = User::from_oauth_response(response);
+        user
+    };
+
+    {
+        // Get save state.
+        let db_uri = "https://todo-list-474ef-default-rtdb.firebaseio.com/";
+        let db = firebase_rs::Firebase::auth(db_uri, &user.firebase_auth_token).unwrap();
+        let board = db
+            .at("users")
+            .at(&user.firebase_uid)
+            .at("board")
+            .get::<Board>()
+            .await?;
+        (*user).board = board;
+    }
+
     Ok((*user).clone())
 }

@@ -1,11 +1,11 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 
 use crate::database::color::Color;
 use crate::database::group::Group;
 use crate::database::reset::Reset;
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Board {
     pub groups: Vec<Group>,
 }

@@ -1,8 +1,8 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{database::id::Id, helpers::trim_whitespace};
 
-#[derive(Serialize, Default, Clone)]
+#[derive(Serialize, Deserialize, Default, Clone, Debug)]
 pub struct Task {
     pub id: Id,
     pub body: String,

@@ -1,13 +1,10 @@
-use futures::{
-    channel::oneshot::{self, Canceled},
-    prelude::*,
-    task::{Context, Poll},
-};
-use hyper::{body::Body, server, service, Request, Response};
+use futures::channel::oneshot::Canceled;
 use oauth2::{AuthorizationCode, CsrfToken};
 use serde::{Deserialize, Serialize};
-use std::net::{AddrParseError, SocketAddr};
-use tower_service::Service;
+use std::net::AddrParseError;
+use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+use tokio::net::TcpListener;
+use url::Url;
 
 pub struct Config {
     pub client_id: String,
@@ -23,9 +20,13 @@ pub struct ReceivedCode {
 #[derive(thiserror::Error, Debug)]
 pub enum ListenForCodeError {
     #[error(transparent)]
-    AddrParseError(#[from] AddrParseError),
+    AddrParse(#[from] AddrParseError),
     #[error(transparent)]
     Canceled(#[from] Canceled),
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+    #[error(transparent)]
+    UrlParse(#[from] url::ParseError),
 }
 
 impl Serialize for ListenForCodeError {
@@ -37,59 +38,58 @@ impl Serialize for ListenForCodeError {
     }
 }
 
-/// Interface to the server.
-pub struct Server {
-    channel: Option<oneshot::Sender<ReceivedCode>>,
-}
-
-impl Service<Request<Body>> for Server {
-    type Response = Response<Body>;
-    type Error = String;
-    type Future = future::BoxFuture<'static, Result<Self::Response, Self::Error>>;
-
-    fn poll_ready(&mut self, _: &mut Context) -> Poll<Result<(), Self::Error>> {
-        Poll::Ready(Ok(()))
-    }
-
-    fn call(&mut self, req: Request<Body>) -> Self::Future {
-        if let Ok(code) =
-            serde_urlencoded::from_str::<ReceivedCode>(req.uri().query().unwrap_or(""))
-        {
-            if let Some(channel) = self.channel.take() {
-                let _ = channel.send(code);
-            }
-        }
-
-        Box::pin(future::ok(Response::new(Body::from(format!("You're all logged in! You're free to close this window and go back to the todo_list app.")))))
-    }
-}
-
 /// Listen for a code at the specified port.
 pub async fn listen_for_code(port: u32) -> anyhow::Result<ReceivedCode, ListenForCodeError> {
     let bind = format!("127.0.0.1:{}", port);
     println!("Listening on: http://{}", bind);
+    // A very naive implementation of the redirect server.
+    let listener = TcpListener::bind(bind).await?;
+    loop {
+        if let Ok((mut stream, _)) = listener.accept().await {
+            let code;
+            let state;
+            {
+                let mut reader = BufReader::new(&mut stream);
 
-    let addr: SocketAddr = str::parse(&bind)?;
+                let mut request_line = String::new();
+                reader.read_line(&mut request_line).await?;
 
-    let (tx, rx) = oneshot::channel::<ReceivedCode>();
+                let redirect_url = request_line.split_whitespace().nth(1).unwrap();
+                let url = Url::parse(&("http://localhost".to_string() + redirect_url))?;
 
-    let mut channel = Some(tx);
+                let code_pair = url
+                    .query_pairs()
+                    .find(|pair| {
+                        let &(ref key, _) = pair;
+                        key == "code"
+                    })
+                    .unwrap();
 
-    let make_svc = service::make_service_fn(|_| {
-        let channel = channel.take().expect("channel is not available");
-        let mut server = Server {
-            channel: Some(channel),
-        };
-        let service = service::service_fn(move |req| server.call(req));
+                let (_, value) = code_pair;
+                code = AuthorizationCode::new(value.into_owned());
 
-        async move { Ok::<_, hyper::Error>(service) }
-    });
+                let state_pair = url
+                    .query_pairs()
+                    .find(|pair| {
+                        let &(ref key, _) = pair;
+                        key == "state"
+                    })
+                    .unwrap();
 
-    let mut server_future = server::Server::bind(&addr).serve(make_svc).fuse();
-    let mut rx = rx.fuse();
+                let (_, value) = state_pair;
+                state = CsrfToken::new(value.into_owned());
+            }
 
-    futures::select! {
-        _ = server_future => panic!("server exited for some reason"),
-        received = rx => Ok(received?),
+            let message = "You're all logged in! You're free to close this window and go back to the todo_list app.";
+            let response = format!(
+                "HTTP/1.1 200 OK\r\ncontent-length: {}\r\n\r\n{}",
+                message.len(),
+                message
+            );
+            stream.write_all(response.as_bytes()).await?;
+
+            // The server will terminate itself after collecting the first code.
+            break Ok(ReceivedCode { code, state });
+        }
     }
 }

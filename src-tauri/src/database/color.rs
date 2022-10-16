@@ -1,7 +1,7 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 
-#[derive(Debug, Display, Default, Clone, Copy, EnumString)]
+#[derive(Debug, Display, Default, Clone, Copy, EnumString, Deserialize)]
 pub enum Color {
     #[default]
     BLUE,

@@ -2,6 +2,16 @@ import { invoke } from "@tauri-apps/api";
 import type { Board, User } from "../database";
 import { board } from "../database/store";
 
+export const save_state = async () => {
+  return invoke<void>("save_state");
+};
+(global as any).window.save_state = save_state;
+
+export const get_save_state = async () => {
+  return invoke<void>("get_save_state");
+};
+(global as any).window.get_save_state = get_save_state;
+
 export const login_with_github = async () => {
   return invoke<User>("login_with_github");
 };
@@ -13,6 +23,7 @@ export const get_user = async () => {
 export const get_board = async () => {
   return invoke<Board>("get_board");
 };
+(global as any).window.get_board = get_board;
 
 export const add_group = async (name: string) => {
   await invoke("add_group", { name });

@@ -21,7 +21,7 @@ impl Display for UrlParseError {
 
 pub type RequestResult<T> = Result<T, RequestError>;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(serde::Serialize, Debug, thiserror::Error)]
 pub enum RequestError {
     NotJSON,
     NoUTF8,

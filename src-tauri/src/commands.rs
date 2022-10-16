@@ -1,5 +1,7 @@
 use std::str::FromStr;
 
+use firebase_rs::RequestError;
+
 use crate::database::board::Board;
 use crate::database::color::Color;
 use crate::database::group::Group;
@@ -10,6 +12,34 @@ use crate::helpers::{
     find_group, find_group_pos, find_group_with_name, find_task, find_task_or_create,
     remove_task_from_group, trim_whitespace,
 };
+
+#[tauri::command]
+pub async fn save_state(state: tauri::State<'_, UserState>) -> Result<(), RequestError> {
+    let user = parse_user_state(&state).await;
+
+    let db_uri = "https://todo-list-474ef-default-rtdb.firebaseio.com/";
+    let db = firebase_rs::Firebase::auth(db_uri, &user.firebase_auth_token).unwrap();
+    db.at("users")
+        .at(&user.firebase_uid)
+        .at("board")
+        .put(&user.board.clone())
+        .await?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn get_save_state(state: tauri::State<'_, UserState>) -> Result<Board, RequestError> {
+    let user = parse_user_state(&state).await;
+
+    let db_uri = "https://todo-list-474ef-default-rtdb.firebaseio.com/";
+    let db = firebase_rs::Firebase::auth(db_uri, &user.firebase_auth_token).unwrap();
+
+    db.at("users")
+        .at(&user.firebase_uid)
+        .at("board")
+        .get::<Board>()
+        .await
+}
 
 #[tauri::command]
 pub async fn get_users(state: tauri::State<'_, UserState>) -> Result<User, ()> {
@@ -152,7 +182,6 @@ pub async fn change_task_body_or_create(
     state: tauri::State<'_, UserState>,
 ) -> Result<(), ()> {
     let mut user = parse_user_state(&state).await;
-
     let group = find_group(group_id.into(), &mut user.board).expect("Group to exist");
     let task_pos = find_task_or_create(task_id.map(|str| str.into()), group);
     group.tasks[task_pos].body = trim_whitespace(body.trim());

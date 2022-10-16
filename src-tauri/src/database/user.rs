@@ -5,7 +5,7 @@ use crate::database::board::Board;
 use crate::database::reset::Reset;
 use crate::oauth::sign_in_with_oauth;
 
-#[derive(Serialize, Clone, Default)]
+#[derive(Serialize, Clone, Default, Debug)]
 pub struct User {
     pub firebase_auth_token: String,
     pub firebase_uid: String,
