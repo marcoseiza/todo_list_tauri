@@ -1,8 +1,9 @@
 <script lang="ts">
   import { login_with_github } from "../backend";
+  import { user } from "../database/store";
 
   const onClick = async () => {
-    console.log(await login_with_github());
+    user.set(await login_with_github());
   };
 </script>
 

@@ -3,7 +3,8 @@
   import BoardBlock from "./lib/BoardBlock.svelte";
   import { GROUP_DND, TASK_DND } from "./database/store";
   import { change_task_group, update_group_pos } from "./backend";
-  import GithubLogin from "./lib/GithubLogin.svelte";
+  import { user } from "./database/store";
+  import LoginScreen from "./lib/LoginScreen.svelte";
 
   const onTaskDrop = (
     task: HTMLElement,
@@ -40,8 +41,8 @@
     data-tauri-drag-region
     class="fixed top-0 left-0 w-full h-[var(--toolbar-size)] z-50"
   />
+  {#if $user == undefined}
+    <LoginScreen />
+  {/if}
   <BoardBlock />
-  <div class="fixed bottom-4 left-4">
-    <GithubLogin />
-  </div>
 </main>

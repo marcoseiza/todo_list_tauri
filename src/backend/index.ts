@@ -7,7 +7,7 @@ export const login_with_github = async () => {
 };
 
 export const get_user = async () => {
-  return invoke<Board>("get_user");
+  return invoke<User>("get_user");
 };
 
 export const get_board = async () => {

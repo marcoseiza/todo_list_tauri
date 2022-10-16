@@ -1,10 +1,10 @@
-import { get_board } from "../backend";
+import { get_board, get_user } from "../backend";
 import { writable } from "svelte/store";
-import type { Board } from ".";
+import { DEFAULT_BOARD, DEFAULT_USER, type Board, type User } from ".";
 
 export const board = (() => {
-  const initialBoardPromise = new Promise<Board>(() => ({ groups: [] }));
-  const { subscribe, set } = writable(initialBoardPromise, () => reload());
+  const initial = new Promise<Board>(() => DEFAULT_BOARD);
+  const { subscribe, set } = writable(initial, () => reload());
 
   const reload = () => {
     set(get_board());
@@ -15,6 +15,8 @@ export const board = (() => {
     reload,
   };
 })();
+
+export const user = writable<User | undefined>(undefined);
 
 export const TASK_DND = "task-dnd";
 export const GROUP_DND = "group-dnd";

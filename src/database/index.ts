@@ -9,6 +9,14 @@ export interface Board {
   groups: Group[];
 }
 
+export const DEFAULT_BOARD: Board = { groups: [] };
+export const DEFAULT_USER: User = {
+  firebase_auth_token: "",
+  firebase_uid: "",
+  full_name: "",
+  board: DEFAULT_BOARD,
+};
+
 export enum GroupColor {
   BLUE = "BLUE",
   GREEN = "GREEN",
