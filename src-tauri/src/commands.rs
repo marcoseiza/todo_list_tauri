@@ -10,14 +10,29 @@ use crate::database::task::Task;
 use crate::database::user::{parse_user_state, parse_user_state_expected, User, UserState};
 use crate::helpers::{
     find_group, find_group_pos, find_group_with_name, find_task, find_task_or_create,
-    remove_task_from_group, trim_whitespace,
+    remove_task_from_group, stringify_error, trim_whitespace,
 };
 use crate::secure_storage;
 
 #[tauri::command]
-pub async fn save(state: tauri::State<'_, UserState>) -> Result<(), RequestError> {
-    let user = parse_user_state_expected(&state).await;
-    user.save().await
+pub async fn save(app: tauri::AppHandle, state: tauri::State<'_, UserState>) -> Result<(), String> {
+    let mut user = parse_user_state_expected(&state).await;
+    match user.save().await {
+        Ok(_) => Ok(()),
+        Err(_) => {
+            // Fallback if access_token didn't work.
+            let bundle_identifier = app.config().tauri.bundle.identifier.clone();
+            let refresh_token = secure_storage::refresh_token::read(bundle_identifier.clone())
+                .map_err(stringify_error)?;
+            let new_refresh_token = user
+                .refresh_access_token(refresh_token)
+                .await
+                .map_err(stringify_error)?;
+            secure_storage::refresh_token::write(new_refresh_token, bundle_identifier)
+                .map_err(stringify_error)?;
+            user.save().await.map_err(stringify_error)
+        }
+    }
 }
 
 #[tauri::command]
