@@ -1,10 +1,9 @@
 use serde::{Deserialize, Serialize};
-use std::env;
 
 pub fn get_post_url() -> String {
     format!(
         "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={}",
-        env::var("FIREBASE_WEB_API_KEY").unwrap()
+        dotenv!("FIREBASE_WEB_API_KEY")
     )
 }
 

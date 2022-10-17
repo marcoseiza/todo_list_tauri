@@ -1,9 +1,8 @@
 use oauth2::{basic::BasicClient, AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl};
-use std::env;
 
 pub fn make_github_client() -> anyhow::Result<BasicClient> {
-    let github_client_id = ClientId::new(env::var("GITHUB_CLIENT_ID")?);
-    let github_client_secret = ClientSecret::new(env::var("GITHUB_CLIENT_SECRET")?);
+    let github_client_id = ClientId::new(dotenv!("GITHUB_CLIENT_ID").to_string());
+    let github_client_secret = ClientSecret::new(dotenv!("GITHUB_CLIENT_SECRET").to_string());
     let auth_url = AuthUrl::new("https://github.com/login/oauth/authorize".to_string())?;
     let token_url = TokenUrl::new("https://github.com/login/oauth/access_token".to_string())?;
 

@@ -1,10 +1,10 @@
 use cocoon::Cocoon;
-use std::{env, fs::File, path::PathBuf};
+use std::{fs::File, path::PathBuf};
 
 use crate::helpers::stringify_error;
 
 pub fn get_encryption_key() -> String {
-    env::var("TOKEN_ENCRYPTION_KEY").unwrap()
+    dotenv!("TOKEN_ENCRYPTION_KEY").to_string()
 }
 
 pub fn get_authentication_file(bundle_identifier: String) -> PathBuf {

@@ -2,8 +2,8 @@
     all(not(debug_assertions), target_os = "windows"),
     windows_subsystem = "windows"
 )]
-
-extern crate dotenv;
+#[macro_use]
+extern crate dotenv_codegen;
 
 pub mod commands;
 pub mod database;
@@ -19,7 +19,6 @@ use database::user::UserState;
 #[cfg(target_os = "macos")]
 use macos::apply_title_bar_options;
 
-use dotenv::dotenv;
 use tauri::Manager;
 use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial};
 
@@ -32,8 +31,6 @@ use crate::commands::{
 use crate::oauth::login_signin_commands::{login, sign_up_with_github};
 
 fn main() {
-    dotenv().ok();
-
     tauri::Builder::default()
         .manage(UserState(Default::default()))
         .invoke_handler(tauri::generate_handler![
