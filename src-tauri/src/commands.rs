@@ -7,55 +7,41 @@ use crate::database::color::Color;
 use crate::database::group::Group;
 use crate::database::reset::Reset;
 use crate::database::task::Task;
-use crate::database::user::{parse_user_state, User, UserState};
+use crate::database::user::{parse_user_state, parse_user_state_expected, User, UserState};
 use crate::helpers::{
     find_group, find_group_pos, find_group_with_name, find_task, find_task_or_create,
     remove_task_from_group, trim_whitespace,
 };
 
 #[tauri::command]
-pub async fn save_state(state: tauri::State<'_, UserState>) -> Result<(), RequestError> {
-    let user = parse_user_state(&state).await;
-
-    let db_uri = "https://todo-list-474ef-default-rtdb.firebaseio.com/";
-    let db = firebase_rs::Firebase::auth(db_uri, &user.firebase_auth_token).unwrap();
-    db.at("users")
-        .at(&user.firebase_uid)
-        .at("board")
-        .put(&user.board.clone())
-        .await?;
-    Ok(())
+pub async fn save(state: tauri::State<'_, UserState>) -> Result<(), RequestError> {
+    let user = parse_user_state_expected(&state).await;
+    user.save().await
 }
 
 #[tauri::command]
-pub async fn get_save_state(state: tauri::State<'_, UserState>) -> Result<Board, RequestError> {
-    let user = parse_user_state(&state).await;
-
-    let db_uri = "https://todo-list-474ef-default-rtdb.firebaseio.com/";
-    let db = firebase_rs::Firebase::auth(db_uri, &user.firebase_auth_token).unwrap();
-
-    db.at("users")
-        .at(&user.firebase_uid)
-        .at("board")
-        .get::<Board>()
-        .await
+pub async fn load(state: tauri::State<'_, UserState>) -> Result<Board, RequestError> {
+    let mut user = parse_user_state_expected(&state).await;
+    user.load().await
 }
 
 #[tauri::command]
-pub async fn get_users(state: tauri::State<'_, UserState>) -> Result<User, ()> {
+pub async fn get_user(state: tauri::State<'_, UserState>) -> Result<Option<User>, ()> {
     let user = parse_user_state(&state).await;
     Ok((*user).clone())
 }
 
 #[tauri::command]
 pub async fn get_board(state: tauri::State<'_, UserState>) -> Result<Board, ()> {
-    let user = parse_user_state(&state).await;
-    Ok(user.board.clone())
+    match &*parse_user_state(&state).await {
+        Some(user) => Ok(user.board.clone()),
+        None => Ok(Board::default()),
+    }
 }
 
 #[tauri::command]
 pub async fn add_group(name: String, state: tauri::State<'_, UserState>) -> Result<(), ()> {
-    let mut user = parse_user_state(&state).await;
+    let mut user = parse_user_state_expected(&state).await;
 
     if find_group_with_name(&name, &mut user.board).is_some() {
         return Err(());
@@ -66,7 +52,7 @@ pub async fn add_group(name: String, state: tauri::State<'_, UserState>) -> Resu
 
 #[tauri::command]
 pub async fn remove_group(group_id: String, state: tauri::State<'_, UserState>) -> Result<(), ()> {
-    let mut user = parse_user_state(&state).await;
+    let mut user = parse_user_state_expected(&state).await;
 
     let group_pos = find_group_pos(group_id.into(), &mut user.board).expect("Group exists");
     (*user).board.groups.remove(group_pos);
@@ -79,7 +65,7 @@ pub async fn update_group_pos(
     neighbor_group_id: Option<String>,
     state: tauri::State<'_, UserState>,
 ) -> Result<(), ()> {
-    let mut user = parse_user_state(&state).await;
+    let mut user = parse_user_state_expected(&state).await;
 
     let group_pos = find_group_pos(group_id.into(), &user.board).expect("Group exists");
     let group = (*user).board.groups.remove(group_pos);
@@ -97,7 +83,7 @@ pub async fn update_group_name(
     name: String,
     state: tauri::State<'_, UserState>,
 ) -> Result<(), ()> {
-    let mut user = parse_user_state(&state).await;
+    let mut user = parse_user_state_expected(&state).await;
 
     if find_group_with_name(&name, &mut user.board).is_some() {
         return Err(());
@@ -113,7 +99,7 @@ pub async fn update_group_color(
     color: String,
     state: tauri::State<'_, UserState>,
 ) -> Result<(), ()> {
-    let mut user = parse_user_state(&state).await;
+    let mut user = parse_user_state_expected(&state).await;
 
     let color: Color = Color::from_str(&*color).unwrap_or_default();
     let group_pos = find_group_pos(group_id.into(), &user.board).expect("Group exists");
@@ -127,7 +113,7 @@ pub async fn add_task(
     body: String,
     state: tauri::State<'_, UserState>,
 ) -> Result<(), ()> {
-    let mut user = parse_user_state(&state).await;
+    let mut user = parse_user_state_expected(&state).await;
 
     let group = find_group(group_id.into(), &mut user.board).expect("Group exists");
     group.tasks.push(Task::default_from(body));
@@ -140,7 +126,7 @@ pub async fn remove_task(
     task_id: String,
     state: tauri::State<'_, UserState>,
 ) -> Result<(), ()> {
-    let mut user = parse_user_state(&state).await;
+    let mut user = parse_user_state_expected(&state).await;
 
     let group = find_group(group_id.into(), &mut user.board).expect("Group to exist");
     let task_pos = find_task(task_id.into(), group).expect("Task to exist");
@@ -156,7 +142,7 @@ pub async fn change_task_group(
     new_group_id: String,
     state: tauri::State<'_, UserState>,
 ) -> Result<(), ()> {
-    let mut user = parse_user_state(&state).await;
+    let mut user = parse_user_state_expected(&state).await;
 
     let task_clone: Task;
     {
@@ -181,7 +167,7 @@ pub async fn change_task_body_or_create(
     body: String,
     state: tauri::State<'_, UserState>,
 ) -> Result<(), ()> {
-    let mut user = parse_user_state(&state).await;
+    let mut user = parse_user_state_expected(&state).await;
     let group = find_group(group_id.into(), &mut user.board).expect("Group to exist");
     let task_pos = find_task_or_create(task_id.map(|str| str.into()), group);
     group.tasks[task_pos].body = trim_whitespace(body.trim());
@@ -190,7 +176,7 @@ pub async fn change_task_body_or_create(
 
 #[tauri::command]
 pub async fn reset(state: tauri::State<'_, UserState>) -> Result<(), ()> {
-    let mut user = parse_user_state(&state).await;
+    let mut user = parse_user_state_expected(&state).await;
     user.reset();
     Ok(())
 }

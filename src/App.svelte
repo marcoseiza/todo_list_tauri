@@ -1,10 +1,12 @@
 <script lang="ts">
   import { makeDrake } from "./lib/drag/Dragula";
   import BoardBlock from "./lib/BoardBlock.svelte";
-  import { GROUP_DND, TASK_DND } from "./database/store";
+  import { GROUP_DND, saving, TASK_DND } from "./database/store";
   import { change_task_group, update_group_pos } from "./backend";
   import { user } from "./database/store";
   import LoginScreen from "./lib/LoginScreen.svelte";
+  import SaveSpinner from "./lib/SaveSpinner.svelte";
+  import GithubUser from "./lib/GithubUser.svelte";
 
   const onTaskDrop = (
     task: HTMLElement,
@@ -43,6 +45,19 @@
   />
   {#if $user == undefined}
     <LoginScreen />
+  {:else}
+    <div class="fixed bottom-0 left-0">
+      <GithubUser
+        avatarUrl={$user.avatar_url}
+        name={$user.full_name}
+        htmlUrl={$user.html_url}
+      />
+    </div>
   {/if}
   <BoardBlock />
+  {#if $saving}
+    <div class="fixed bottom-2 right-2">
+      <SaveSpinner />
+    </div>
+  {/if}
 </main>

@@ -20,7 +20,7 @@
   export let group: Group;
   let edit = false;
 
-  let tasksCardInfos = group.tasks.map(taskToTaskCardInfo);
+  $: tasksCardInfos = group.tasks.map(taskToTaskCardInfo);
 
   const addTask = () => {
     tasksCardInfos = tasksCardInfos.concat(newEditingTaskCardInfo());
@@ -59,7 +59,7 @@
     use:dropData={group.id}
     class="flex flex-col gap-2 pb-10 min-w-0"
   >
-    {#each tasksCardInfos as info}
+    {#each tasksCardInfos as info (info.id)}
       <TaskCard groupId={group.id} {info} />
     {/each}
     <AddTask {addTask} />

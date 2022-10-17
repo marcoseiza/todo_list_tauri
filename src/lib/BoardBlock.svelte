@@ -9,17 +9,15 @@
 
 <div class="overflow-scroll w-full h-full flex p-4 pt-[var(--toolbar-size)]">
   <div class="relative flex gap-4 h-fit" use:dragContainer={GROUP_DND}>
-    {#await $board then board}
-      {#each board.groups as group (group.id)}
-        <div
-          class="min-w-[300px] max-w-[300px]"
-          use:movableItem={GROUP_DND}
-          use:dropData={group.id}
-        >
-          <GroupBlock {group} />
-        </div>
-      {/each}
-    {/await}
+    {#each $board.groups as group (group.id)}
+      <div
+        class="min-w-[300px] max-w-[300px]"
+        use:movableItem={GROUP_DND}
+        use:dropData={group.id}
+      >
+        <GroupBlock {group} />
+      </div>
+    {/each}
   </div>
   <AddGroup />
 </div>

@@ -1,13 +1,12 @@
 use firebase_rs;
 use oauth2::basic::BasicErrorResponseType;
 use oauth2::reqwest::async_http_client;
-use oauth2::{CsrfToken, Scope, TokenResponse};
+use oauth2::{CsrfToken, TokenResponse};
 use oauth2::{RequestTokenError, StandardErrorResponse};
 use reqwest;
 use serde::Serialize;
 use tokio::sync::MutexGuard;
 
-use crate::database::board::Board;
 use crate::database::user::{parse_user_state, User, UserState};
 use crate::oauth::github_client::parse_github_client_state;
 use crate::oauth::oauth_helper::{listen_for_code, ListenForCodeError, ReceivedCode};
@@ -57,12 +56,7 @@ pub async fn login_with_github(
     let ghclient = parse_github_client_state(&ghclient_state).await;
 
     // Generate the authorization URL to which we'll redirect the user.
-    let (authorize_url, csrf_state) = ghclient
-        .authorize_url(CsrfToken::new_random)
-        // This example is requesting access to the user's public repos and email.
-        .add_scope(Scope::new("public_repo".to_string()))
-        .add_scope(Scope::new("user:email".to_string()))
-        .url();
+    let (authorize_url, csrf_state) = ghclient.authorize_url(CsrfToken::new_random).url();
 
     let code_future = listen_for_code(8080);
 
@@ -71,6 +65,7 @@ pub async fn login_with_github(
         format!("github_auth_{}", csrf_state.secret()),
         tauri::WindowUrl::External(authorize_url),
     )
+    .title("Github Authentication")
     .build()
     .unwrap();
 
@@ -92,36 +87,14 @@ pub async fn login_with_github(
 
     window.close()?;
 
-    let mut user: MutexGuard<User> = {
-        // Log in user
-        let reqclient = reqwest::Client::new();
-        let response = reqclient
-            .post(sign_in_with_oauth::get_post_url())
-            .json(&sign_in_with_oauth::RequestBody::make_body_for_github(
-                access_token,
-            ))
-            .send()
-            .await?
-            .json::<sign_in_with_oauth::ResponseBody>()
-            .await?;
-
+    let mut user: MutexGuard<Option<User>> = {
+        let response = sign_in_with_oauth::get_response(access_token).await?;
         let mut user = parse_user_state(&user_state).await;
-        *user = User::from_oauth_response(response);
+        *user = Some(User::from_oauth_response(&response));
         user
     };
 
-    {
-        // Get save state.
-        let db_uri = "https://todo-list-474ef-default-rtdb.firebaseio.com/";
-        let db = firebase_rs::Firebase::auth(db_uri, &user.firebase_auth_token).unwrap();
-        let board = db
-            .at("users")
-            .at(&user.firebase_uid)
-            .at("board")
-            .get::<Board>()
-            .await?;
-        (*user).board = board;
-    }
-
-    Ok((*user).clone())
+    // Safe unwrap due to assignment above.
+    (*user).as_mut().unwrap().load().await?;
+    Ok((*user).as_ref().unwrap().clone())
 }

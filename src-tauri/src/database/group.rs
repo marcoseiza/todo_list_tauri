@@ -11,6 +11,7 @@ pub struct Group {
     pub id: Id,
     pub name: String,
     pub color: Color,
+    #[serde(default)]
     pub tasks: Vec<Task>,
 }
 

@@ -1,4 +1,6 @@
 export interface User {
+  avatar_url: string;
+  html_url: string;
   firebase_auth_token: string;
   firebase_uid: string;
   full_name: string;
@@ -11,6 +13,8 @@ export interface Board {
 
 export const DEFAULT_BOARD: Board = { groups: [] };
 export const DEFAULT_USER: User = {
+  avatar_url: "",
+  html_url: "",
   firebase_auth_token: "",
   firebase_uid: "",
   full_name: "",
