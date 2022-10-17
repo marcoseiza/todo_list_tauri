@@ -1,6 +1,10 @@
+use cocoon::Cocoon;
 use futures::channel::oneshot::Canceled;
 use oauth2::{AuthorizationCode, CsrfToken};
 use serde::{Deserialize, Serialize};
+use std::env;
+use std::fmt::Write;
+use std::fs::File;
 use std::net::AddrParseError;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::TcpListener;
@@ -92,4 +96,39 @@ pub async fn listen_for_code(port: u32) -> anyhow::Result<ReceivedCode, ListenFo
             break Ok(ReceivedCode { code, state });
         }
     }
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum WriteRefreshTokenError {
+    #[error(transparent)]
+    VarError(#[from] env::VarError),
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
+}
+
+impl Serialize for WriteRefreshTokenError {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.to_string().as_ref())
+    }
+}
+
+pub fn write_refresh_token_to_local_data(
+    refresh_token: &String,
+    bundle_identifier: &String,
+) -> Result<(), WriteRefreshTokenError> {
+    let data = refresh_token.as_bytes();
+    let encryption_key = env::var("TOKEN_ENCRYPTION_KEY")?;
+    let cocoon = Cocoon::new(encryption_key.as_bytes());
+    let resolved_path = tauri::api::path::local_data_dir()
+        .unwrap()
+        .join(bundle_identifier)
+        .join("authentication.txt");
+
+    let mut file = File::create(&resolved_path)?;
+
+    cocoon.dump(data.to_vec(), &mut file).unwrap();
+    Ok(())
 }

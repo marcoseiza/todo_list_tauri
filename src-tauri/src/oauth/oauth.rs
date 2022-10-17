@@ -12,7 +12,8 @@ use crate::oauth::github_client::parse_github_client_state;
 use crate::oauth::oauth_helper::{listen_for_code, ListenForCodeError, ReceivedCode};
 use crate::oauth::sign_in_with_oauth;
 
-use super::github_client::GithubClient;
+use crate::oauth::github_client::GithubClient;
+use crate::oauth::oauth_helper::{write_refresh_token_to_local_data, WriteRefreshTokenError};
 
 #[derive(thiserror::Error, Debug)]
 pub enum GetGithubTokenError {
@@ -36,6 +37,8 @@ pub enum GetGithubTokenError {
     FirebaseUrlParseError(#[from] firebase_rs::errors::UrlParseError),
     #[error(transparent)]
     FirebaseRequestError(#[from] firebase_rs::errors::RequestError),
+    #[error(transparent)]
+    WriteRefreshTokenError(#[from] WriteRefreshTokenError),
 }
 
 impl Serialize for GetGithubTokenError {
@@ -87,8 +90,9 @@ pub async fn login_with_github(
 
     window.close()?;
 
+    let response = sign_in_with_oauth::get_response(access_token).await?;
+
     let mut user: MutexGuard<Option<User>> = {
-        let response = sign_in_with_oauth::get_response(access_token).await?;
         let mut user = parse_user_state(&user_state).await;
         *user = Some(User::from_oauth_response(&response));
         user
@@ -96,5 +100,14 @@ pub async fn login_with_github(
 
     // Safe unwrap due to assignment above.
     (*user).as_mut().unwrap().load().await?;
+
+    tokio::spawn(async move {
+        write_refresh_token_to_local_data(
+            &response.refreshToken,
+            &app.config().tauri.bundle.identifier,
+        )
+        .unwrap();
+    });
+
     Ok((*user).as_ref().unwrap().clone())
 }
