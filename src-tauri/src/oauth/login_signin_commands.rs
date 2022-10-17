@@ -1,54 +1,12 @@
-use firebase_rs;
-use oauth2::basic::BasicErrorResponseType;
 use oauth2::reqwest::async_http_client;
 use oauth2::{CsrfToken, TokenResponse};
-use oauth2::{RequestTokenError, StandardErrorResponse};
-use reqwest;
-use serde::Serialize;
 
 use super::github_client::make_github_client;
-use crate::database::user::{parse_user_state, User, UserState};
+use crate::database::{parse_user_state, User, UserState};
 use crate::firebase_interface::sign_in_with_oauth;
 use crate::helpers::stringify_error;
-use crate::oauth::callback_server::{listen_for_code, ListenForCodeError, ReceivedCode};
-use crate::secure_storage;
-
-#[derive(thiserror::Error, Debug)]
-pub enum GetGithubTokenError {
-    #[error(transparent)]
-    ListenForCodeError(#[from] ListenForCodeError),
-    #[error("Github returned the following state:\n{expected:?} (expected `{returned:?}`)")]
-    CsrfTokenMismatch { expected: String, returned: String },
-    #[error(transparent)]
-    RequestTokenError(
-        #[from]
-        RequestTokenError<
-            oauth2::reqwest::Error<reqwest::Error>,
-            StandardErrorResponse<BasicErrorResponseType>,
-        >,
-    ),
-    #[error(transparent)]
-    TauriError(#[from] tauri::Error),
-    #[error(transparent)]
-    ReqwestError(#[from] reqwest::Error),
-    #[error(transparent)]
-    FirebaseUrlParseError(#[from] firebase_rs::errors::UrlParseError),
-    #[error(transparent)]
-    FirebaseRequestError(#[from] firebase_rs::errors::RequestError),
-    #[error(transparent)]
-    WriteRefreshTokenError(#[from] secure_storage::refresh_token::WriteRefreshTokenError),
-    #[error(transparent)]
-    AnyhowError(#[from] anyhow::Error),
-}
-
-impl Serialize for GetGithubTokenError {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(self.to_string().as_ref())
-    }
-}
+use crate::oauth::callback_server::{listen_for_code, ReceivedCode};
+use crate::secure_storage::refresh_token;
 
 #[tauri::command]
 pub async fn sign_up_with_github(
@@ -98,12 +56,11 @@ pub async fn sign_up_with_github(
     let mut user_guard = parse_user_state(&user_state).await;
     *user_guard = Some(User::from_oauth_response(&response));
     let user = (*user_guard).as_mut().unwrap();
-    user.save().await.map_err(stringify_error)?;
-    user.load().await.map_err(stringify_error)?;
+    user.save_only_user_info().await.map_err(stringify_error)?;
+    user.load_only_board().await.map_err(stringify_error)?;
 
     let bundle_identifier = app.config().tauri.bundle.identifier.clone();
-    secure_storage::refresh_token::write(response.refreshToken.clone(), bundle_identifier)
-        .map_err(stringify_error)?;
+    refresh_token::write(response.refreshToken.clone(), bundle_identifier)?;
 
     Ok(user.clone())
 }
@@ -114,8 +71,7 @@ pub async fn login(
     user_state: tauri::State<'_, UserState>,
 ) -> Result<User, String> {
     let bundle_identifier = app.config().tauri.bundle.identifier.clone();
-    let refresh_token =
-        secure_storage::refresh_token::read(bundle_identifier.clone()).map_err(stringify_error)?;
+    let refresh_token = refresh_token::read(bundle_identifier.clone())?;
     let mut user_guard = parse_user_state(&user_state).await;
     *user_guard = Some(User::default());
     let user = (*user_guard).as_mut().unwrap();
@@ -125,7 +81,6 @@ pub async fn login(
         .map_err(stringify_error)?;
     user.load().await.map_err(stringify_error)?;
 
-    secure_storage::refresh_token::write(new_refresh_token, bundle_identifier)
-        .map_err(stringify_error)?;
+    refresh_token::write(new_refresh_token, bundle_identifier)?;
     Ok(user.clone())
 }

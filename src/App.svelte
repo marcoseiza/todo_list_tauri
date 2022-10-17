@@ -48,9 +48,9 @@
   {:else}
     <div class="fixed bottom-0 left-0">
       <GithubUser
-        avatarUrl={$user.avatar_url}
-        name={$user.full_name}
-        htmlUrl={$user.html_url}
+        avatarUrl={$user.user_info.avatar_url}
+        name={$user.user_info.full_name}
+        htmlUrl={$user.user_info.html_url}
       />
     </div>
   {/if}

@@ -1,7 +1,9 @@
 export interface User {
-  avatar_url: string;
-  html_url: string;
-  full_name: string;
+  user_info: {
+    avatar_url: string;
+    html_url: string;
+    full_name: string;
+  };
   board: Board;
 }
 
@@ -11,9 +13,7 @@ export interface Board {
 
 export const DEFAULT_BOARD: Board = { groups: [] };
 export const DEFAULT_USER: User = {
-  avatar_url: "",
-  html_url: "",
-  full_name: "",
+  user_info: { avatar_url: "", html_url: "", full_name: "" },
   board: DEFAULT_BOARD,
 };
 

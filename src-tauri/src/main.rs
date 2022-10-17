@@ -29,7 +29,7 @@ use crate::commands::{
     update_group_name, update_group_pos,
 };
 
-use crate::oauth::command::{login, sign_up_with_github};
+use crate::oauth::login_signin_commands::{login, sign_up_with_github};
 
 fn main() {
     dotenv().ok();
@@ -37,23 +37,23 @@ fn main() {
     tauri::Builder::default()
         .manage(UserState(Default::default()))
         .invoke_handler(tauri::generate_handler![
-            get_board,
             add_group,
             add_task,
-            reset,
-            remove_task,
-            change_task_group,
             change_task_body_or_create,
-            update_group_pos,
-            remove_group,
-            update_group_name,
-            update_group_color,
-            save,
-            load,
+            change_task_group,
+            get_board,
             get_user,
+            load,
             login,
+            refresh_user_token,
+            remove_group,
+            remove_task,
+            reset,
+            save,
             sign_up_with_github,
-            refresh_user_token
+            update_group_color,
+            update_group_name,
+            update_group_pos,
         ])
         .setup(|app| {
             let window = app.get_window("main").unwrap();

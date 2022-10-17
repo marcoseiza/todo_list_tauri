@@ -8,25 +8,32 @@ use crate::firebase_interface::refresh_token;
 use crate::firebase_interface::sign_in_with_oauth;
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug)]
-pub struct User {
+pub struct GithubUserInfo {
     pub avatar_url: String,
     pub html_url: String,
+    pub full_name: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Default, Debug)]
+pub struct User {
     #[serde(skip)]
     pub firebase_auth_token: String,
     #[serde(skip)]
     pub firebase_uid: String,
-    pub full_name: String,
     pub board: Board,
+    pub user_info: GithubUserInfo,
 }
 
 impl User {
     pub fn from_oauth_response(body: &sign_in_with_oauth::ResponseBody) -> Self {
         Self {
-            avatar_url: body.rawUserInfo.avatar_url.clone(),
-            html_url: body.rawUserInfo.html_url.clone(),
             firebase_auth_token: body.idToken.clone(),
             firebase_uid: body.localId.clone(),
-            full_name: body.fullName.clone().unwrap_or_else(|| "Unkown".into()),
+            user_info: (GithubUserInfo {
+                avatar_url: body.rawUserInfo.avatar_url.clone(),
+                html_url: body.rawUserInfo.html_url.clone(),
+                full_name: body.fullName.clone().unwrap_or_else(|| "Unkown".into()),
+            }),
             ..User::default()
         }
     }
@@ -38,15 +45,37 @@ impl User {
         Ok(())
     }
 
+    pub async fn save_only_user_info(&self) -> Result<(), RequestError> {
+        let db_uri = "https://todo-list-474ef-default-rtdb.firebaseio.com/";
+        let db = firebase_rs::Firebase::auth(db_uri, &self.firebase_auth_token).unwrap();
+        db.at("users")
+            .at(&self.firebase_uid)
+            .at("user_info")
+            .put(&self.user_info)
+            .await?;
+        Ok(())
+    }
+
     pub async fn load(&mut self) -> Result<Board, RequestError> {
         let db_uri = "https://todo-list-474ef-default-rtdb.firebaseio.com/";
         let db = firebase_rs::Firebase::auth(db_uri, &self.firebase_auth_token).unwrap();
         let user_response = db.at("users").at(&self.firebase_uid).get::<User>().await;
         let user = user_response.as_ref();
         self.board = user.map_or_else(|_| Board::default(), |u| u.board.clone());
-        self.avatar_url = user.map_or_else(|_| String::default(), |u| u.avatar_url.clone());
-        self.html_url = user.map_or_else(|_| String::default(), |u| u.html_url.clone());
-        self.full_name = user.map_or_else(|_| String::default(), |u| u.full_name.clone());
+        self.user_info = user.map_or_else(|_| GithubUserInfo::default(), |u| u.user_info.clone());
+        Ok(self.board.clone())
+    }
+
+    pub async fn load_only_board(&mut self) -> Result<Board, RequestError> {
+        let db_uri = "https://todo-list-474ef-default-rtdb.firebaseio.com/";
+        let db = firebase_rs::Firebase::auth(db_uri, &self.firebase_auth_token).unwrap();
+        let board = db
+            .at("users")
+            .at(&self.firebase_uid)
+            .at("board")
+            .get::<Board>()
+            .await?;
+        self.board = board;
         Ok(self.board.clone())
     }
 

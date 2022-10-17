@@ -7,8 +7,8 @@
 <a
   href={htmlUrl}
   target="_blank"
-  class="flex items-center gap-3 p-3 pr-5 bg-neutral-500 rounded-tr-xl"
+  class="flex items-center gap-3 p-2 pr-4 pb-3 bg-neutral-800 rounded-tr-xl opacity-70 hover:opacity-100 transition-opacity"
 >
-  <img src={avatarUrl} alt="Github Avatar Url" class="rounded-full w-7 h-7" />
-  <h2 class="text-lg font-bold">{name}</h2>
+  <img src={avatarUrl} alt="Github Avatar Url" class="rounded-full w-6 h-6" />
+  <h2 class="text-md font-bold">{name}</h2>
 </a>
