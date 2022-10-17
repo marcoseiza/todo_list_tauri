@@ -1,8 +1,5 @@
 use oauth2::{basic::BasicClient, AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl};
 use std::env;
-use tokio::sync::{Mutex, MutexGuard};
-
-pub struct GithubClient(pub Mutex<BasicClient>);
 
 pub fn make_github_client() -> anyhow::Result<BasicClient> {
     let github_client_id = ClientId::new(env::var("GITHUB_CLIENT_ID")?);
@@ -20,10 +17,4 @@ pub fn make_github_client() -> anyhow::Result<BasicClient> {
     .set_redirect_uri(RedirectUrl::new("http://localhost:8080".to_string())?);
 
     Ok(client)
-}
-
-pub async fn parse_github_client_state<'a>(
-    state: &'a tauri::State<'a, GithubClient>,
-) -> MutexGuard<'a, BasicClient> {
-    state.0.lock().await
 }

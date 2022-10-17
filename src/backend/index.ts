@@ -12,13 +12,22 @@ export const load = async () => {
 };
 (global as any).window.load = load;
 
-export const login_with_github = async () => {
-  return invoke<User>("login_with_github");
+export const sign_up_with_github = async () => {
+  return invoke<User>("sign_up_with_github");
+};
+
+export const login = async () => {
+  return invoke<User>("login");
 };
 
 export const get_user = async () => {
   return invoke<User>("get_user");
 };
+
+export const refresh_user_token = async () => {
+  return invoke<User>("refresh_user_token");
+};
+(global as any).window.refresh_user_token = refresh_user_token;
 
 export const get_board = async () => {
   return invoke<Board>("get_board");

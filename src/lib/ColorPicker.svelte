@@ -1,6 +1,6 @@
 <script lang="ts">
   import ColorButton from "./ColorButton.svelte";
-  import { slide, fade } from "svelte/transition";
+  import { fade } from "svelte/transition";
   import { GroupColor } from "../database";
 
   export let onColor: (color: GroupColor) => void;

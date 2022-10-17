@@ -39,6 +39,29 @@ const saveController = (() => {
   };
 })();
 
+export enum UserLoginState {
+  UNKOWN,
+  LOADING,
+  NEEDS_SIGN_UP,
+  ERROR,
+  GOOD_TO_GO,
+}
+
+export const userLoginState = (() => {
+  const { subscribe, set } = writable<UserLoginState>(UserLoginState.UNKOWN);
+
+  return {
+    subscribe,
+    set,
+    error: () => {
+      userLoginState.set(UserLoginState.ERROR);
+      setTimeout(() => {
+        userLoginState.set(UserLoginState.UNKOWN);
+      }, 2000);
+    },
+  };
+})();
+
 export const user = (() => {
   const { subscribe, set } = writable<User | undefined>(undefined, () => {
     initial();
@@ -46,10 +69,14 @@ export const user = (() => {
 
   const initial = async () => {
     try {
-      let user = await backend.get_user();
+      userLoginState.set(UserLoginState.LOADING);
+      let user = await backend.login();
       set(user);
+      await board.reload();
+      userLoginState.set(UserLoginState.GOOD_TO_GO);
       console.log(user);
     } catch (e) {
+      userLoginState.set(UserLoginState.NEEDS_SIGN_UP);
       console.error(e);
     }
   };

@@ -24,7 +24,7 @@ impl Default for Board {
 
 impl Reset for Board {
     fn reset(&mut self) {
-        self.groups = Board::default().groups.clone();
+        self.groups = Board::default().groups;
     }
 }
 

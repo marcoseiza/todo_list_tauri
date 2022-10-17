@@ -15,6 +15,11 @@
   let editColor = false;
   const onMouseEnter = () => (editColor = edit && true);
   const onMouseLeave = () => (editColor = edit && false);
+
+  let onColorInternal = (color: GroupColor) => {
+    onColor(color);
+    editColor = false;
+  };
 </script>
 
 <div class="flex items-start font-bold gap-3">
@@ -27,7 +32,10 @@
     <div use:dragHandle class="{edit && 'opacity-0'} transition-opacity">
       <DotsSixVertical size={32} />
     </div>
-    {#if editColor}<ColorPicker {onColor} exclude={color} />{/if}
+    {#if editColor}<ColorPicker
+        onColor={onColorInternal}
+        exclude={color}
+      />{/if}
   </div>
   <h1 class="flex text-2xl break-all mt-1">
     {#if !edit}

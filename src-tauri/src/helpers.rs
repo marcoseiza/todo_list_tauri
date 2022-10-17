@@ -23,7 +23,7 @@ pub fn find_group(group_id: Id, board: &mut Board) -> Option<&mut Group> {
     board.groups.iter_mut().find(|group| group.id == group_id)
 }
 
-pub fn find_group_with_name(name: &String, board: &mut Board) -> Option<usize> {
+pub fn find_group_with_name(name: &str, board: &mut Board) -> Option<usize> {
     board
         .groups
         .iter()
@@ -54,4 +54,11 @@ pub fn remove_task_from_group(task_id: Id, group: &mut Group) -> Option<Task> {
     let task_clone = group.tasks[task_pos].clone();
     group.tasks.remove(task_pos);
     Some(task_clone)
+}
+
+pub fn stringify_error<T>(error: T) -> String
+where
+    T: ToString,
+{
+    error.to_string()
 }

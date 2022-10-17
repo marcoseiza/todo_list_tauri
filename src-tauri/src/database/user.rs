@@ -1,16 +1,19 @@
 use firebase_rs::RequestError;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tokio::sync::{MappedMutexGuard, Mutex, MutexGuard};
 
 use crate::database::board::Board;
 use crate::database::reset::Reset;
-use crate::oauth::sign_in_with_oauth;
+use crate::firebase_interface::refresh_token;
+use crate::firebase_interface::sign_in_with_oauth;
 
-#[derive(Serialize, Clone, Default, Debug)]
+#[derive(Serialize, Deserialize, Clone, Default, Debug)]
 pub struct User {
     pub avatar_url: String,
     pub html_url: String,
+    #[serde(skip)]
     pub firebase_auth_token: String,
+    #[serde(skip)]
     pub firebase_uid: String,
     pub full_name: String,
     pub board: Board,
@@ -23,33 +26,42 @@ impl User {
             html_url: body.rawUserInfo.html_url.clone(),
             firebase_auth_token: body.idToken.clone(),
             firebase_uid: body.localId.clone(),
-            full_name: body.fullName.clone().unwrap_or("Unkown".into()),
+            full_name: body.fullName.clone().unwrap_or_else(|| "Unkown".into()),
             ..User::default()
         }
     }
 
-    pub async fn save(self: &Self) -> Result<(), RequestError> {
+    pub async fn save(&self) -> Result<(), RequestError> {
         let db_uri = "https://todo-list-474ef-default-rtdb.firebaseio.com/";
         let db = firebase_rs::Firebase::auth(db_uri, &self.firebase_auth_token).unwrap();
-        db.at("users")
-            .at(&self.firebase_uid)
-            .at("board")
-            .put(&self.board)
-            .await?;
+        db.at("users").at(&self.firebase_uid).put(self).await?;
         Ok(())
     }
 
-    pub async fn load(self: &mut Self) -> Result<Board, RequestError> {
+    pub async fn load(&mut self) -> Result<Board, RequestError> {
         let db_uri = "https://todo-list-474ef-default-rtdb.firebaseio.com/";
         let db = firebase_rs::Firebase::auth(db_uri, &self.firebase_auth_token).unwrap();
-        self.board = db
-            .at("users")
-            .at(&self.firebase_uid)
-            .at("board")
-            .get::<Board>()
-            .await
-            .unwrap_or_default();
+        let user_response = db.at("users").at(&self.firebase_uid).get::<User>().await;
+        let user = user_response.as_ref();
+        self.board = user.map_or_else(|_| Board::default(), |u| u.board.clone());
+        self.avatar_url = user.map_or_else(|_| String::default(), |u| u.avatar_url.clone());
+        self.html_url = user.map_or_else(|_| String::default(), |u| u.html_url.clone());
+        self.full_name = user.map_or_else(|_| String::default(), |u| u.full_name.clone());
         Ok(self.board.clone())
+    }
+
+    pub async fn refresh_access_token(&mut self, refresh_token: String) -> anyhow::Result<String> {
+        let response = reqwest::Client::new()
+            .post(refresh_token::get_post_url())
+            .form(&refresh_token::RequestBody::new(refresh_token))
+            .send()
+            .await?
+            .json::<refresh_token::ResponseBody>()
+            .await?;
+
+        self.firebase_auth_token = response.id_token;
+        self.firebase_uid = response.user_id;
+        Ok(response.refresh_token)
     }
 }
 

@@ -12,6 +12,7 @@ use crate::helpers::{
     find_group, find_group_pos, find_group_with_name, find_task, find_task_or_create,
     remove_task_from_group, trim_whitespace,
 };
+use crate::secure_storage;
 
 #[tauri::command]
 pub async fn save(state: tauri::State<'_, UserState>) -> Result<(), RequestError> {
@@ -29,6 +30,27 @@ pub async fn load(state: tauri::State<'_, UserState>) -> Result<Board, RequestEr
 pub async fn get_user(state: tauri::State<'_, UserState>) -> Result<Option<User>, ()> {
     let user = parse_user_state(&state).await;
     Ok((*user).clone())
+}
+
+#[tauri::command]
+pub async fn refresh_user_token(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, UserState>,
+) -> Result<(), String> {
+    let bundle_identifier = app.config().tauri.bundle.identifier.clone();
+    let mut user = parse_user_state_expected(&state).await;
+
+    let refresh_token = secure_storage::refresh_token::read(bundle_identifier.clone())
+        .map_err(|_| String::from("ReadRefreshTokenError"))?;
+
+    let refresh_token = user
+        .refresh_access_token(refresh_token)
+        .await
+        .map_err(|_| String::from("RefreshTokenError"))?;
+
+    secure_storage::refresh_token::write(refresh_token, bundle_identifier)
+        .map_err(|_| String::from("WriteRefreshTokenError"))?;
+    Ok(())
 }
 
 #[tauri::command]
@@ -54,7 +76,7 @@ pub async fn add_group(name: String, state: tauri::State<'_, UserState>) -> Resu
 pub async fn remove_group(group_id: String, state: tauri::State<'_, UserState>) -> Result<(), ()> {
     let mut user = parse_user_state_expected(&state).await;
 
-    let group_pos = find_group_pos(group_id.into(), &mut user.board).expect("Group exists");
+    let group_pos = find_group_pos(group_id.into(), &user.board).expect("Group exists");
     (*user).board.groups.remove(group_pos);
     Ok(())
 }
@@ -84,11 +106,13 @@ pub async fn update_group_name(
     state: tauri::State<'_, UserState>,
 ) -> Result<(), ()> {
     let mut user = parse_user_state_expected(&state).await;
+    let group_pos = find_group_pos(group_id.into(), &user.board).expect("Group exists");
 
-    if find_group_with_name(&name, &mut user.board).is_some() {
+    let similar_group_pos = find_group_with_name(&name, &mut user.board);
+    if similar_group_pos.is_some() && similar_group_pos.unwrap() != group_pos {
         return Err(());
     }
-    let group_pos = find_group_pos(group_id.into(), &user.board).expect("Group exists");
+
     (*user).board.groups[group_pos].name = name;
     Ok(())
 }
@@ -153,7 +177,7 @@ pub async fn change_task_group(
         let new_group = find_group(new_group_id.into(), &mut user.board).expect("Group to exist");
         let neighbor_index = neighbor_task_id
             .map(|str| str.into())
-            .and_then(|id| find_task(id, &new_group))
+            .and_then(|id| find_task(id, new_group))
             .unwrap_or(new_group.tasks.len());
         new_group.tasks.insert(neighbor_index, task_clone);
     }

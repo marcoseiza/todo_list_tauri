@@ -1,9 +1,15 @@
 <script lang="ts">
-  import { login_with_github } from "../backend";
-  import { user } from "../database/store";
+  import { sign_up_with_github } from "../backend";
+  import { user, UserLoginState, userLoginState } from "../database/store";
 
   const onClick = async () => {
-    user.set(await login_with_github());
+    userLoginState.set(UserLoginState.LOADING);
+    try {
+      user.set(await sign_up_with_github());
+      userLoginState.set(UserLoginState.GOOD_TO_GO);
+    } catch (e) {
+      userLoginState.error();
+    }
   };
 </script>
 
