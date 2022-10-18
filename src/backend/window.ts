@@ -1,6 +1,3 @@
-// import { appWindow } from "@tauri-apps/api/window";
-// import { confirm } from "@tauri-apps/api/dialog";
-
 import { window, dialog } from "@tauri-apps/api";
 import { get } from "svelte/store";
 import { saving, SavingStates, user } from "../database/store";
