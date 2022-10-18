@@ -3,3 +3,9 @@
 Works in MacOS, have not checked out Windows or Linux.
 
 Read more about it here in my blog, [Starting Out With Rust and Svelte Using Tauri](http://meizayaga.com/posts/9b762fca-c59f-4c6e-8684-f2885a8df1e6)
+
+## New Features
+- Github oauth2 login.
+- Cloud storage with firebase.
+
+Super excited for these ^
