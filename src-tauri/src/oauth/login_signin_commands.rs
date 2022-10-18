@@ -57,7 +57,7 @@ pub async fn sign_up_with_github(
     *user_guard = Some(User::from_oauth_response(&response));
     let user = (*user_guard).as_mut().unwrap();
     user.save_only_user_info().await.map_err(stringify_error)?;
-    user.load_only_board().await.map_err(stringify_error)?;
+    let _ = user.load_only_board().await;
 
     let bundle_identifier = app.config().tauri.bundle.identifier.clone();
     refresh_token::write(response.refreshToken.clone(), bundle_identifier)?;

@@ -1,5 +1,6 @@
 pub mod board;
 pub mod color;
+pub mod crypto;
 pub mod group;
 pub mod id;
 pub mod reset;

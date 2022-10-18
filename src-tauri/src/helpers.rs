@@ -62,3 +62,18 @@ where
 {
     error.to_string()
 }
+
+pub fn join_bytes(nums: &[u8], sep: &str) -> String {
+    nums.iter()
+        .map(|n| n.to_string())
+        .collect::<Vec<String>>()
+        .join(sep)
+}
+
+pub fn separate_bytes(nums_str: &str, sep: &str) -> Vec<u8> {
+    nums_str
+        .split(sep)
+        .into_iter()
+        .map(|n_str| str::parse::<u8>(n_str).unwrap())
+        .collect::<Vec<u8>>()
+}

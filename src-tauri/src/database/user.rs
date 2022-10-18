@@ -1,11 +1,11 @@
+use cocoon::Cocoon;
 use firebase_rs::RequestError;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{MappedMutexGuard, Mutex, MutexGuard};
 
-use crate::database::board::Board;
-use crate::database::reset::Reset;
-use crate::firebase_interface::refresh_token;
-use crate::firebase_interface::sign_in_with_oauth;
+use crate::database::crypto::Secure;
+use crate::database::{Board, EncryptedBoard, Reset};
+use crate::firebase_interface::{refresh_token, sign_in_with_oauth};
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug)]
 pub struct GithubUserInfo {
@@ -20,7 +20,19 @@ pub struct User {
     pub firebase_auth_token: String,
     #[serde(skip)]
     pub firebase_uid: String,
+    #[serde(default)]
     pub board: Board,
+    pub user_info: GithubUserInfo,
+}
+
+#[derive(Serialize, Deserialize, Clone, Default, Debug)]
+pub struct EncryptedUser {
+    #[serde(skip)]
+    pub firebase_auth_token: String,
+    #[serde(skip)]
+    pub firebase_uid: String,
+    #[serde(default)]
+    pub board: Option<EncryptedBoard>,
     pub user_info: GithubUserInfo,
 }
 
@@ -41,7 +53,11 @@ impl User {
     pub async fn save(&self) -> Result<(), RequestError> {
         let db_uri = "https://todo-list-474ef-default-rtdb.firebaseio.com/";
         let db = firebase_rs::Firebase::auth(db_uri, &self.firebase_auth_token).unwrap();
-        db.at("users").at(&self.firebase_uid).put(self).await?;
+        let encrypted_user = self.encrypt(&Cocoon::new(self.firebase_uid.as_bytes()));
+        db.at("users")
+            .at(&self.firebase_uid)
+            .put(&encrypted_user)
+            .await?;
         Ok(())
     }
 
@@ -59,10 +75,17 @@ impl User {
     pub async fn load(&mut self) -> Result<Board, RequestError> {
         let db_uri = "https://todo-list-474ef-default-rtdb.firebaseio.com/";
         let db = firebase_rs::Firebase::auth(db_uri, &self.firebase_auth_token).unwrap();
-        let user_response = db.at("users").at(&self.firebase_uid).get::<User>().await;
-        let user = user_response.as_ref();
-        self.board = user.map_or_else(|_| Board::default(), |u| u.board.clone());
-        self.user_info = user.map_or_else(|_| GithubUserInfo::default(), |u| u.user_info.clone());
+        let user_response = db
+            .at("users")
+            .at(&self.firebase_uid)
+            .get::<EncryptedUser>()
+            .await;
+
+        let cocoon = Cocoon::new(self.firebase_uid.as_bytes());
+
+        let user = user_response.as_ref().map(|u| User::decrypt(&cocoon, u));
+        self.board = user.clone().map_or_else(|_| Board::default(), |u| u.board);
+        self.user_info = user.map_or_else(|_| GithubUserInfo::default(), |u| u.user_info);
         Ok(self.board.clone())
     }
 
@@ -97,6 +120,33 @@ impl User {
 impl Reset for User {
     fn reset(&mut self) {
         self.board.reset();
+    }
+}
+
+impl Secure for User {
+    type Encrypted = EncryptedUser;
+
+    fn encrypt(&self, cocoon: &cocoon::Cocoon<cocoon::Creation>) -> Self::Encrypted {
+        Self::Encrypted {
+            board: Some(self.board.encrypt(cocoon)),
+            firebase_auth_token: self.firebase_auth_token.clone(),
+            firebase_uid: self.firebase_uid.clone(),
+            user_info: self.user_info.clone(),
+        }
+    }
+
+    fn decrypt(cocoon: &cocoon::Cocoon<cocoon::Creation>, container: &Self::Encrypted) -> Self {
+        let board = if let Some(container_board) = &container.board {
+            Board::decrypt(cocoon, container_board)
+        } else {
+            Board::default()
+        };
+        Self {
+            board,
+            firebase_auth_token: container.firebase_auth_token.clone(),
+            firebase_uid: container.firebase_uid.clone(),
+            user_info: container.user_info.clone(),
+        }
     }
 }
 

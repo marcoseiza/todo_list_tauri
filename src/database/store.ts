@@ -19,16 +19,22 @@ export const board = (() => {
   };
 })();
 
-export const saving = writable(false);
+export enum SavingStates {
+  SAVING,
+  IDLE,
+  SAVING_AND_BLOCKING,
+}
 
-const saveController = (() => {
-  const INTERVAL = 30_000;
+export const saving = writable(SavingStates.IDLE);
+
+export const saveController = (() => {
+  const INTERVAL = 60_000;
   const MIN_INTERVAL_SAVING = 500;
 
   const save = async () => {
-    saving.set(false);
+    saving.set(SavingStates.IDLE);
     await timeout(INTERVAL);
-    saving.set(true);
+    saving.set(SavingStates.SAVING);
     await backend.save();
     await timeout(MIN_INTERVAL_SAVING);
     save();
@@ -56,7 +62,7 @@ export const userLoginState = (() => {
     error: () => {
       userLoginState.set(UserLoginState.ERROR);
       setTimeout(() => {
-        userLoginState.set(UserLoginState.UNKOWN);
+        userLoginState.set(UserLoginState.NEEDS_SIGN_UP);
       }, 2000);
     },
   };
@@ -73,11 +79,10 @@ export const user = (() => {
       let user = await backend.login();
       set(user);
       await board.reload();
+      saveController.start();
       userLoginState.set(UserLoginState.GOOD_TO_GO);
-      console.log(user);
     } catch (e) {
       userLoginState.set(UserLoginState.NEEDS_SIGN_UP);
-      console.error(e);
     }
   };
 
@@ -89,10 +94,15 @@ export const user = (() => {
       saveController.start();
     },
     save: async () => {
-      saving.set(true);
+      saving.set(SavingStates.SAVING);
       await backend.save();
       board.reload();
-      saving.set(false);
+      saving.set(SavingStates.IDLE);
+    },
+    saveAndBlock: async () => {
+      saving.set(SavingStates.SAVING_AND_BLOCKING);
+      await backend.save();
+      saving.set(SavingStates.IDLE);
     },
   };
 })();

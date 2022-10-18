@@ -63,14 +63,6 @@ fn main() {
             );
             Ok(())
         })
-        .on_window_event(|event| {
-            if let tauri::WindowEvent::CloseRequested { .. } = event.event() {
-                let app_handle = event.window().app_handle();
-                let user_state = app_handle.state::<UserState>();
-                let save_future = save(app_handle.clone(), user_state);
-                tauri::async_runtime::block_on(save_future).unwrap();
-            }
-        })
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

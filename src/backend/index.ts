@@ -8,7 +8,8 @@ export const save = async () => {
 (global as any).window.save = save;
 
 export const load = async () => {
-  return invoke<void>("load");
+  invoke<Board>("load");
+  return board.reload();
 };
 (global as any).window.load = load;
 
@@ -62,7 +63,6 @@ export const update_group_name = async (groupId: string, name: string) => {
 
 export const update_group_color = async (groupId: string, color: string) => {
   await invoke("update_group_color", { groupId, color });
-  // board.reload();
 };
 
 export const add_task = async (groupId: string, body: string) => {
