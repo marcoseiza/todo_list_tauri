@@ -6,6 +6,6 @@ Read more about it here in my blog, [Starting Out With Rust and Svelte Using Tau
 
 ## New Features
 - Github oauth2 login.
-- Cloud storage with firebase.
+- Encrypted cloud storage with firebase. (All your tasks bodies and group names are encrypted using [Rust Cocoon](https://crates.io/crates/cocoon))
 
 Super excited for these ^
